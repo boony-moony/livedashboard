@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>linuslinus.com — Infrastructure Map</title>
+<style>
+:root {
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans:  -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+</style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bone:#1c1a18;--white:#242220;--ink:#e8e4df;--ink2:#c8c4bf;
+  --muted:#8a8680;--faint:#5a5652;--border:#2e2c2a;--surface:#201e1c;
+  --pg:#1a2e1c;--pgt:#6abf74;
+  --pb:#141e2e;--pbt:#5a9fd4;
+  --py:#2a2210;--pyt:#c8a040;
+  --pr:#2a1414;--prt:#c86060;
+}
+html,body{min-height:100dvh;background:var(--bone);font-family:var(--font-sans);color:var(--ink2);overflow-x:hidden}
+
+/* HEADER */
+header{
+  background:var(--white);border-bottom:1px solid var(--border);
+  height:52px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:300;
+}
+.logo{font-family:var(--font-serif);font-size:1.05rem;letter-spacing:-.01em;color:var(--ink)}
+.logo em{color:var(--muted);font-style:italic;font-weight:400}
+.hdr-right{display:flex;align-items:center;gap:14px}
+.clk{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.pulse{width:7px;height:7px;border-radius:50%;background:#4caf7d;flex-shrink:0;animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(76,175,125,.2)}50%{box-shadow:0 0 0 5px rgba(76,175,125,.06)}}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:1fr 320px;min-height:calc(100dvh - 52px)}
+
+/* GRAPH AREA */
+.graph-area{padding:24px 32px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--border);min-width:0}
+.sec-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+
+/* SVG */
+#graph-svg{width:100%;height:auto;max-height:520px;display:block;cursor:default}
+.node-group{cursor:pointer}
+.node-group:hover .node-ring{opacity:1}
+.node-ring{opacity:0;transition:opacity .2s}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--muted)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* SHARED TAG */
+.m-tag{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:9px;letter-spacing:.04em;text-transform:uppercase}
+.tg{background:var(--pg);color:var(--pgt)}.tb{background:var(--pb);color:var(--pbt)}
+.ty{background:var(--py);color:var(--pyt)}.tr{background:var(--pr);color:var(--prt)}
+
+/* INFO FOOTER */
+.info-footer{display:flex;flex-direction:column;gap:10px;padding-top:0;align-items:center}
+.info-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.info-cards{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border)}
+.info-card{background:var(--white);padding:18px 20px;display:flex;gap:14px;align-items:flex-start;transition:background .15s}
+.info-card:hover{background:var(--surface)}
+.info-card-icon{font-size:1.1rem;color:var(--faint);flex-shrink:0;margin-top:1px;line-height:1;width:20px;text-align:center}
+.info-card-body{flex:1;min-width:0}
+.info-card-title{font-family:var(--font-serif);font-size:1rem;letter-spacing:-.01em;color:var(--ink);margin-bottom:5px}
+.info-card-text{font-size:.8rem;line-height:1.6;color:var(--muted)}
+
+/* DESKTOP SIDEBAR */
+.sidebar{padding:28px 24px;display:flex;flex-direction:column;gap:0;background:var(--white);overflow-y:auto}
+.panel-empty{text-align:center;padding:60px 16px;color:var(--faint);font-size:.875rem;line-height:1.7}
+.panel-empty strong{display:block;font-family:var(--font-serif);font-size:1.1rem;color:var(--muted);margin-bottom:6px;font-weight:600}
+
+/* DETAIL CONTENT */
+#detail{display:none;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.detail-eyebrow{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.detail-name{font-family:var(--font-serif);font-size:1.35rem;letter-spacing:-.015em;color:var(--ink);margin-bottom:3px;line-height:1.15}
+.detail-role{font-size:.8rem;color:var(--muted);margin-bottom:18px}
+.detail-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.detail-kv{display:flex;flex-direction:column}
+.kv-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--border)}
+.kv-row:last-child{border-bottom:none}
+.kv-k{font-size:.79rem;color:var(--muted)}
+.kv-v{font-family:var(--font-mono);font-size:.75rem;color:var(--ink);text-align:right;max-width:160px;word-break:break-all}
+.kv-v.ok{color:var(--pgt)}.kv-v.warn{color:var(--pyt)}.kv-v.info{color:var(--pbt)}
+.detail-desc{font-size:.83rem;line-height:1.65;color:var(--muted);margin-top:14px}
+.services-list{margin-top:10px;display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+.svc-row{background:var(--white);display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:.79rem}
+.svc-dot{width:5px;height:5px;border-radius:50%;background:#4caf7d;flex-shrink:0}
+.svc-name{flex:1;color:var(--ink);font-weight:500}
+.svc-port{font-family:var(--font-mono);font-size:9.5px;color:var(--muted)}
+.conn-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.conn-badge{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-family:var(--font-mono);font-size:9.5px;color:var(--ink2)}
+.close-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:4px;font-family:var(--font-sans);font-size:12px;color:var(--muted);padding:7px 14px;cursor:pointer;margin-top:18px;transition:border-color .15s,color .15s;min-height:44px}
+.close-btn:hover{border-color:var(--ink);color:var(--ink)}
+.detail-link-btn{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:var(--bone);font-family:var(--font-sans);font-size:12px;font-weight:500;padding:8px 16px;border-radius:4px;margin-top:18px;text-decoration:none;transition:background .15s;min-height:44px;border:1px solid var(--border)}
+.detail-link-btn:hover{background:var(--surface)}
+
+/* MOBILE BOTTOM SHEET */
+.sheet-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(17,17,17,.35);backdrop-filter:blur(2px);animation:overlayIn .2s ease}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--white);border-top:1px solid var(--border);border-radius:16px 16px 0 0;max-height:80dvh;overflow-y:auto;padding:0 20px 40px;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;border-radius:9999px;background:var(--faint);margin:12px auto 20px}
+.sheet-close{position:absolute;top:14px;right:18px;width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);cursor:pointer;line-height:1}
+
+/* HEADER NAV */
+.hdr-nav{display:flex;align-items:center;gap:2px;margin:0 16px}
+.nav-btn{font-family:var(--font-sans);font-size:12px;font-weight:500;letter-spacing:.03em;border:none;background:none;cursor:pointer;color:var(--muted);padding:6px 12px;border-radius:4px;transition:color .15s,background .15s;white-space:nowrap}
+.nav-btn:hover{color:var(--ink);background:var(--surface)}
+.nav-btn.active{color:var(--ink);background:var(--bone)}
+
+/* CONTACT PAGE */
+.contact-wrap{max-width:640px;margin:0 auto;padding:64px 32px 80px}
+.contact-eyebrow{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+.contact-h1{font-family:var(--font-serif);font-size:clamp(2.4rem,6vw,3.6rem);letter-spacing:-.03em;line-height:1.05;color:var(--ink2);margin-bottom:14px}
+.contact-sub{font-size:1rem;line-height:1.7;color:var(--muted);max-width:46ch;margin-bottom:48px}
+.contact-cards{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:40px}
+.contact-card{display:flex;align-items:center;gap:16px;padding:22px 24px;background:var(--white);text-decoration:none;color:inherit;transition:background .15s;cursor:pointer}
+.contact-card:hover{background:var(--surface)}
+.contact-card--copy{user-select:none}
+.contact-card-icon{font-size:1.1rem;color:var(--faint);width:22px;text-align:center;flex-shrink:0;line-height:1}
+.contact-card-body{flex:1;min-width:0}
+.contact-card-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.contact-card-value{font-family:var(--font-serif);font-size:1.15rem;letter-spacing:-.01em;color:var(--ink);margin-bottom:3px}
+.contact-card-hint{font-size:.78rem;color:var(--faint)}
+.contact-card-arrow{font-size:1rem;color:var(--faint);flex-shrink:0;transition:color .15s,transform .15s}
+.contact-card:hover .contact-card-arrow{color:var(--ink);transform:translate(2px,-2px)}
+.contact-info-cards{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:40px}
+.contact-info-cards .info-card{padding:20px 22px}
+.contact-note{border-top:1px solid var(--border);padding-top:28px}
+.contact-note-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.contact-note p{font-size:.875rem;line-height:1.7;color:var(--muted);max-width:48ch}
+
+.status-bar{display:flex;align-items:center;gap:10px;padding:9px 24px;border-bottom:1px solid var(--border);font-size:.78rem;transition:background .3s}
+.status-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:1rem;line-height:1;padding:2px 4px;opacity:.5;transition:opacity .15s;flex-shrink:0}
+.status-bar.operational .status-close{color:var(--pgt)}
+.status-bar.degraded .status-close{color:var(--pyt)}
+.status-bar.down .status-close{color:var(--prt)}
+.status-close:hover{opacity:1}
+.status-bar.operational{background:var(--pg);border-bottom-color:#2e2c2a}
+.status-bar.degraded{background:var(--py)}
+.status-bar.down{background:var(--pr)}
+.status-dot-wrap{display:flex;align-items:center}
+.status-indicator{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-bar.operational .status-indicator{background:var(--pgt)}
+.status-bar.degraded .status-indicator{background:var(--pyt)}
+.status-bar.down .status-indicator{background:var(--prt)}
+.status-text{color:var(--ink2);line-height:1.5}
+.status-bar.operational .status-text{color:var(--pgt)}
+.status-bar.degraded .status-text{color:var(--pyt)}
+.status-bar.down .status-text{color:var(--prt)}
+
+.uptime-wrap{max-width:680px;margin:0 auto;padding:64px 32px 80px}
+.uptime-eyebrow{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+.uptime-overall{margin-bottom:28px}
+.uptime-big-num{font-family:var(--font-serif);font-size:clamp(3rem,8vw,5rem);letter-spacing:-.04em;line-height:1;color:var(--ink);margin-bottom:6px}
+.uptime-big-label{font-size:.85rem;color:var(--muted)}
+
+/* CARD */
+.ut-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:10px}
+.ut-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.ut-card-left{display:flex;align-items:center;gap:10px}
+.ut-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#EAEAEA}
+.ut-dot.up{background:#4caf7d}
+.ut-dot.degraded{background:#c88a00}
+.ut-dot.down{background:#c84040}
+.ut-dot.unknown{background:#DADAD6}
+.ut-card-name{font-size:.9rem;font-weight:500;color:var(--ink)}
+.ut-card-session{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);margin-top:2px}
+
+/* PERCENTAGES */
+.ut-pcts{display:flex;gap:16px;flex-shrink:0}
+.ut-pct-item{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ut-pct-val{font-family:var(--font-serif);font-size:1.05rem;letter-spacing:-.01em;color:var(--ink);line-height:1}
+.ut-pct-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+
+/* BAR */
+.ut-bar-wrap{background:var(--bone);border-radius:9999px;height:5px;overflow:hidden;margin-bottom:5px}
+.ut-bar{display:flex;height:100%;gap:1.5px;align-items:stretch}
+.ut-block{flex:1;border-radius:2px;min-width:2px}
+.ut-block.up{background:#4caf7d}
+.ut-block.degraded{background:#c88a00}
+.ut-block.down{background:#c84040}
+.ut-block.unknown{background:#DADAD6}
+.ut-bar-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--faint);letter-spacing:.04em}
+
+/* SERVICES LIST */
+.ut-services{display:flex;flex-direction:column;gap:10px}
+
+/* MOBILE */
+/* NODE ORBIT RINGS */
+@keyframes orbitSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes orbitSpinR{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+.orbit{transform-origin:center;transform-box:fill-box;fill:none;stroke-linecap:round}
+
+.admin-wrap{display:grid;grid-template-columns:220px 1fr 220px;gap:32px;max-width:1300px;margin:0 auto;padding:48px 32px 80px;align-items:start}
+.adm-narrow{max-width:640px}
+.admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+.adm-lock-title{font-family:var(--font-serif);font-size:1.3rem;color:var(--ink)}
+.adm-section{margin-bottom:28px}
+.adm-section-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.adm-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.adm-field{display:flex;flex-direction:column;gap:5px}
+.adm-label{font-size:.78rem;color:var(--muted)}
+.adm-input{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--font-sans);font-size:.875rem;color:var(--ink);width:100%;outline:none;transition:border-color .15s;box-sizing:border-box}
+.adm-input:focus{border-color:var(--ink2)}
+.adm-btn{display:inline-flex;align-items:center;background:var(--ink);color:var(--bone);font-family:var(--font-sans);font-size:13px;font-weight:500;padding:9px 20px;border-radius:6px;border:none;cursor:pointer;transition:background .15s;align-self:flex-start;min-height:40px}
+.adm-btn:hover{background:var(--ink2)}
+.adm-logout-btn{font-family:var(--font-sans);font-size:12px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:4px;padding:6px 14px;cursor:pointer;transition:border-color .15s,color .15s}
+.adm-logout-btn:hover{color:var(--ink);border-color:var(--ink)}
+.adm-toggle{display:flex;align-items:center;gap:10px;font-size:.875rem;color:var(--ink);cursor:pointer}
+.adm-toggle input{accent-color:var(--pgt);width:16px;height:16px;cursor:pointer}
+
+/* HOME PAGE */
+.home-wrap{max-width:860px;margin:0 auto;padding:72px 32px 80px;position:relative}
+
+/* Pulse animation */
+.pulse-container{position:relative;width:60px;height:60px;margin:0 auto 52px;display:flex;align-items:center;justify-content:center}
+.pulse-dot{width:12px;height:12px;border-radius:50%;background:#6abf74;position:relative;z-index:2;opacity:0;transition:opacity .3s}
+.pulse-dot.visible{opacity:1}
+.pulse-ring{position:absolute;border-radius:50%;border:1px solid #6abf74;opacity:0;transform:scale(0)}
+@keyframes pulseExpand{0%{transform:scale(0);opacity:.6}100%{transform:scale(1);opacity:0}}
+.pulse-ring.fire{animation:pulseExpand 1.4s cubic-bezier(.2,.8,.2,1) forwards}
+.r1{width:60px;height:60px}
+.r2{width:110px;height:110px}
+.r3{width:170px;height:170px}
+
+/* Hero */
+.home-hero{margin-bottom:64px;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease;text-align:center}
+.home-hero.visible{opacity:1;transform:none}
+.home-eyebrow{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.home-h1{font-family:var(--font-serif);font-size:clamp(2.8rem,6vw,4.4rem);letter-spacing:-.03em;line-height:1.04;color:var(--ink);margin-bottom:18px}
+.home-h1 em{font-style:italic;color:var(--muted)}
+.home-sub{font-size:1rem;line-height:1.75;color:var(--muted);max-width:48ch;margin:0 auto}
+
+/* Divider */
+.home-divider{width:1px;height:40px;background:var(--border);margin:0 auto 48px;opacity:0;transition:opacity .5s ease .9s}
+.home-divider.visible{opacity:1}
+
+/* Service list */
+.home-services{display:flex;flex-direction:column;margin-bottom:48px}
+.home-svc-row{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);opacity:0;transform:translateX(-12px);transition:opacity .5s ease calc(var(--i)*100ms + 1s),transform .5s ease calc(var(--i)*100ms + 1s)}
+.home-svc-row:first-child{border-top:1px solid var(--border)}
+.home-svc-row.visible{opacity:1;transform:none}
+.home-svc-dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex-shrink:0;transition:background .3s}
+.home-svc-dot.up{background:#6abf74}
+.home-svc-dot.degraded{background:#c8a040}
+.home-svc-dot.down{background:#c84040}
+.home-svc-dot.maintenance{background:#c8a040}
+.home-svc-name{font-size:.9rem;font-weight:500;color:var(--ink);min-width:120px}
+.home-svc-desc{font-size:.82rem;line-height:1.5;color:var(--muted);flex:1}
+.home-svc-state{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);flex-shrink:0}
+.home-svc-state.up{color:#6abf74}
+.home-svc-state.down{color:#c84040}
+.home-svc-state.degraded{color:#c8a040}
+
+/* Footer note */
+.home-note{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--faint);flex-wrap:wrap;gap:8px;opacity:0;transition:opacity .6s ease 1.4s}
+.home-note.visible{opacity:1}
+.home-note-link{background:none;border:none;color:var(--muted);font-family:var(--font-sans);font-size:.78rem;cursor:pointer;padding:0;transition:color .15s}
+.home-note-link:hover{color:var(--ink)}
+
+.graph-intro{padding-bottom:4px}
+.graph-intro-text{font-size:.82rem;line-height:1.65;color:var(--muted);max-width:52ch;margin-top:6px}
+
+.adm-container-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s;cursor:default}
+.adm-container-card[draggable]:hover{border-color:var(--ink2)}
+.adm-cc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;gap:8px}
+.adm-cc-body{padding:0 16px 16px;border-top:1px solid var(--border);padding-top:14px}
+.adm-drag-handle{color:var(--faint);font-size:14px;cursor:grab;flex-shrink:0;line-height:1}
+.adm-drag-handle:active{cursor:grabbing}
+
+.adm-sidebar{position:sticky;top:48px;display:flex;flex-direction:column;gap:20px;padding-top:80px}
+.adm-sidebar-section{display:flex;flex-direction:column;gap:8px}
+.adm-sidebar-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.adm-main{min-width:0}
+
+/* MOBILE OVERRIDES */
+@media(max-width:768px){
+  .wrap{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .graph-area{padding:14px 14px 20px;border-right:none;border-bottom:1px solid var(--border)}
+  header{padding:0 14px}
+  .clk{display:none}
+  .info-legend{gap:10px}
+  .leg-item{font-size:.72rem}
+  .contact-wrap{padding:40px 16px 60px}
+  .uptime-wrap{padding:40px 16px 60px}
+  .home-wrap{padding:40px 16px 60px}
+  .admin-wrap{grid-template-columns:1fr;padding:24px 16px 60px}
+  .adm-sidebar{position:static;display:contents}
+  .adm-left-sidebar-mobile{display:flex;flex-direction:column;gap:20px;order:-1}
+  .home-svc-desc{display:none}
+  #adm-inuse-list,#adm-notinuse-list{grid-template-columns:1fr}
+  .admin-wrap .adm-section > div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr}
+  .ut-pcts{gap:10px}
+  .hdr-nav{margin:0 8px}
+  .nav-btn{padding:6px 8px;font-size:11px}
+}
+@media(min-width:769px){
+  .sheet-overlay,.sheet{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">linuslinus<em>.com</em></div>
+  <nav class="hdr-nav">
+    <button class="nav-btn active" onclick="showPage('home',this)">Home</button>
+    <button class="nav-btn" onclick="showPage('map',this)">Network</button>
+    <button class="nav-btn" onclick="showPage('uptime',this)">Uptime</button>
+    <button class="nav-btn" onclick="showPage('contact',this)">Contact</button>
+    <button class="nav-btn" id="admin-nav-btn" onclick="showPage('admin',this)" style="color:var(--faint);font-size:10px;opacity:0.4">⚙</button>
+  </nav>
+  <div class="hdr-right">
+    <span class="clk" id="clk">--:--:--</span>
+    <div class="pulse"></div>
+  </div>
+</header>
+
+<div id="status-bar" class="status-bar">
+  <div class="status-dot-wrap"><div class="status-indicator" id="status-indicator"></div></div>
+  <span class="status-text" id="status-text"></span>
+  <button class="status-close" onclick="dismissStatus()" aria-label="Dismiss">×</button>
+</div>
+
+<!-- HOME PAGE -->
+<div id="page-home">
+  <div class="home-wrap">
+
+    <!-- PULSE ANIMATION LAYER -->
+    <div class="pulse-container" id="pulse-container">
+      <div class="pulse-ring r1"></div>
+      <div class="pulse-ring r2"></div>
+      <div class="pulse-ring r3"></div>
+      <div class="pulse-dot" id="pulse-dot"></div>
+    </div>
+
+    <!-- HERO -->
+    <div class="home-hero" id="home-hero">
+      <div class="home-eyebrow" id="home-eyebrow">linuslinus.com</div>
+      <h1 class="home-h1" id="home-h1">Self-hosted.<br><em>Always on.</em></h1>
+      <p class="home-sub" id="home-sub">A personal homelab running open-source services. Built for fun, kept running with care.</p>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="home-divider" id="home-divider"></div>
+
+    <!-- SERVICE LIST — populated dynamically from live data -->
+    <div class="home-services" id="home-services">
+      <!-- populated by renderHomeCards() -->
+    </div>
+
+    <!-- FOOTER NOTE -->
+    <div class="home-note" id="home-note">
+      <span>This is a homelab — occasional downtime happens.</span>
+      <button class="home-note-link" onclick="showPage('uptime', document.querySelectorAll('.nav-btn')[2])">Check uptime →</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="page-map" style="display:none">
+
+<!-- MOBILE BOTTOM SHEET -->
+<div class="sheet-overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-close" onclick="closeDetail()">×</div>
+  <div id="detail-mobile"></div>
+</div>
+
+<div class="wrap">
+  <div class="graph-area">
+    <div class="graph-intro">
+      <div class="sec-label">Network topology</div>
+      <p class="graph-intro-text">A map of the infrastructure behind this site. Nodes represent physical machines and services — click any to read more. Packets show simulated traffic patterns based on how the network actually behaves.</p>
+    </div>
+
+    <svg id="graph-svg" viewBox="0 0 700 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M1 1L7 4L1 7" fill="none" stroke="#3a3835" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arr-wg" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M1 1L7 4L1 7" fill="none" stroke="#3B8BD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arr-cf" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M1 1L7 4L1 7" fill="none" stroke="#E8960A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- EDGES -->
+      <!-- Internet → CF -->
+      <line x1="350" y1="46" x2="350" y2="98" stroke="#3a3835" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <!-- CF → Linode (A record / DNS proxy) -->
+      <text x="358" y="172" fill="#5a5652" font-family="JetBrains Mono,monospace" font-size="9" letter-spacing="0.04em">A record</text>
+      <line x1="350" y1="134" x2="350" y2="194" stroke="#3a3835" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <!-- CF → CF Domains cluster -->
+      <text x="415" y="142" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="9" letter-spacing="0.04em">subdomains</text>
+      <line x1="368" y1="124" x2="478" y2="172" stroke="#E8960A" stroke-width="0.9" stroke-dasharray="3 2" marker-end="url(#arr-cf)"/>
+      <!-- CF Domains → TrueNAS (same tunnel) -->
+      <line x1="490" y1="218" x2="186" y2="322" stroke="#E8960A" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr-cf)"/>
+      <!-- Linode WG ↔ TrueNAS -->
+      <line x1="328" y1="230" x2="184" y2="320" stroke="#3B8BD4" stroke-width="1.4" marker-start="url(#arr-wg)" marker-end="url(#arr-wg)"/>
+      <!-- TrueNAS → Services -->
+      <line x1="163" y1="362" x2="163" y2="434" stroke="#3a3835" stroke-width="1" marker-end="url(#arr)"/>
+
+
+      <!-- Edge labels -->
+      <text x="244" y="282" fill="#5a9fd4" font-family="JetBrains Mono,monospace" font-size="9" letter-spacing="0.04em">wg0</text>
+
+
+      <!-- NODES -->
+
+      <!-- Internet -->
+      <g class="node-group" onclick="select('internet')">
+        <circle class="node-ring" cx="350" cy="30" r="22" fill="none" stroke="#111" stroke-width="1.5" opacity="0"/>
+        <circle cx="350" cy="30" r="16" fill="#242220" stroke="#2e2c2a" stroke-width="1"/>
+        <text x="350" y="26" text-anchor="middle" fill="#8a8680" font-family="JetBrains Mono,monospace" font-size="8">www</text>
+        <text x="350" y="36" text-anchor="middle" fill="#8a8680" font-family="JetBrains Mono,monospace" font-size="8">WAN</text>
+        <text x="350" y="68" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">Internet</text>
+      </g>
+
+      <!-- Cloudflare (centre) -->
+      <g class="node-group" onclick="select('cloudflare')">
+        <circle class="node-ring" cx="350" cy="116" r="26" fill="none" stroke="#E8960A" stroke-width="1.5" opacity="0"/>
+        <circle cx="350" cy="116" r="20" fill="#2a2210" stroke="#c8a040" stroke-width="1.2"/>
+        <text x="350" y="112" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">CF</text>
+        <text x="350" y="122" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">DNS</text>
+        <text x="350" y="158" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">Cloudflare</text>
+      </g>
+
+      <!-- CF Domains cluster (right) -->
+      <g class="node-group" onclick="select('cfdomains')">
+        <circle class="node-ring" cx="510" cy="196" r="28" fill="none" stroke="#E8960A" stroke-width="1.5" opacity="0"/>
+        <circle cx="510" cy="196" r="22" fill="#2a2210" stroke="#c8a040" stroke-width="1.2"/>
+        <text x="510" y="191" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="7.5">SUB</text>
+        <text x="510" y="201" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="7.5">DOMAINS</text>
+        <text x="510" y="228" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">Domains</text>
+      </g>
+
+      <!-- Subdomain pills -->
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="174" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="187" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">linuslinus.com</text>
+        <line x1="540" y1="183" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="200" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="213" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">nextcloud.linuslinus.com</text>
+        <line x1="540" y1="209" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="226" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="239" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">matrix.linuslinus.com</text>
+        <line x1="540" y1="235" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="252" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="265" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">element.linuslinus.com</text>
+        <line x1="540" y1="261" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="278" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="291" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">crafty.linuslinus.com</text>
+        <line x1="540" y1="287" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+      <g class="node-group" onclick="select('cfdomains')">
+        <rect x="540" y="304" width="148" height="19" rx="9" fill="#2a2210" stroke="#c8a040" stroke-width="0.8"/>
+        <text x="614" y="317" text-anchor="middle" fill="#c8a040" font-family="JetBrains Mono,monospace" font-size="8">linkwarden.linuslinus.com</text>
+        <line x1="540" y1="313" x2="534" y2="196" stroke="#c8a040" stroke-width="0.6" stroke-dasharray="3 2"/>
+      </g>
+
+      <!-- Linode -->
+      <g class="node-group" onclick="select('linode')">
+        <circle class="node-ring" cx="350" cy="216" r="30" fill="none" stroke="#111" stroke-width="1.5" opacity="0"/>
+        <circle cx="350" cy="216" r="24" fill="#242220" stroke="#c8c4bf" stroke-width="1.5"/>
+        <text x="350" y="212" text-anchor="middle" fill="#e8e4df" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="500">VPS</text>
+        <text x="350" y="221" text-anchor="middle" fill="#8a8680" font-family="JetBrains Mono,monospace" font-size="7">172.232.x · WG relay</text>
+        <text x="350" y="264" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">Linode</text>
+      </g>
+
+
+
+      <!-- TrueNAS -->
+      <g class="node-group" onclick="select('truenas')">
+        <circle class="node-ring" cx="163" cy="340" r="28" fill="none" stroke="#346538" stroke-width="1.5" opacity="0"/>
+        <circle cx="163" cy="340" r="22" fill="#1a2e1c" stroke="#6abf74" stroke-width="1.2"/>
+        <text x="163" y="336" text-anchor="middle" fill="#6abf74" font-family="JetBrains Mono,monospace" font-size="8" font-weight="500">NAS</text>
+        <text x="163" y="346" text-anchor="middle" fill="#6abf74" font-family="JetBrains Mono,monospace" font-size="7">SCALE</text>
+        <text x="163" y="386" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">TrueNAS</text>
+      </g>
+
+      <!-- Services -->
+      <g class="node-group" onclick="select('services')">
+        <circle class="node-ring" cx="163" cy="454" r="26" fill="none" stroke="#346538" stroke-width="1.5" opacity="0"/>
+        <circle cx="163" cy="454" r="20" fill="#1a2e1c" stroke="#6abf74" stroke-width="1"/>
+        <text x="163" y="450" text-anchor="middle" fill="#6abf74" font-family="JetBrains Mono,monospace" font-size="7.5">SVC</text>
+        <text x="163" y="460" text-anchor="middle" fill="#6abf74" font-family="JetBrains Mono,monospace" font-size="7.5" id="svc-node-count">×0</text>
+        <text x="163" y="496" text-anchor="middle" fill="#e8e4df" font-family="Switzer,sans-serif" font-size="10" font-weight="500" stroke="#1c1a18" stroke-width="3" paint-order="stroke">Services</text>
+      </g>
+
+
+
+      <circle id="sel-ring" cx="0" cy="0" r="0" fill="none" stroke="#e8e4df" stroke-width="2" opacity="0" style="pointer-events:none;transition:opacity .2s"/>
+      <!-- ORBIT RINGS -->
+      <circle class="orbit" cx="350" cy="30" r="26" stroke="#5a5652" stroke-width="1" stroke-dasharray="4 6" opacity="0.4" style="animation:orbitSpin 12s linear infinite"/>
+      <circle class="orbit" cx="350" cy="116" r="32" stroke="#c8a040" stroke-width="1" stroke-dasharray="5 5" opacity="0.5" style="animation:orbitSpin 9s linear infinite"/>
+      <circle class="orbit" cx="510" cy="196" r="34" stroke="#c8a040" stroke-width="1" stroke-dasharray="4 7" opacity="0.45" style="animation:orbitSpinR 11s linear infinite"/>
+      <circle class="orbit" cx="350" cy="216" r="36" stroke="#c8c4bf" stroke-width="1" stroke-dasharray="6 4" opacity="0.35" style="animation:orbitSpin 10s linear infinite"/>
+      <circle class="orbit" cx="163" cy="340" r="34" stroke="#6abf74" stroke-width="1" stroke-dasharray="5 4" opacity="0.5" style="animation:orbitSpin 8s linear infinite"/>
+      <circle class="orbit" cx="163" cy="454" r="31" stroke="#6abf74" stroke-width="1" stroke-dasharray="3 7" opacity="0.4" style="animation:orbitSpinR 13s linear infinite"/>
+      <!-- PACKET ANIMATION LAYER -->
+      <g id="packet-layer" style="pointer-events:none"></g>
+    </svg>
+
+    <div class="info-footer">
+      <div class="info-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#111"></div>Physical node</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#4caf7d"></div>TrueNAS / services</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#E8960A"></div>Cloudflare</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#3B8BD4"></div>WireGuard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div class="sec-label" style="margin-bottom:20px">Node detail</div>
+    <div id="empty-state" class="panel-empty">
+      <strong>Select a node</strong>
+      Click any node in the graph to read about it.
+    </div>
+    <div id="detail"></div>
+  </div>
+</div>
+
+
+</div><!-- end #page-map -->
+
+<!-- UPTIME PAGE -->
+<div id="page-uptime" style="display:none">
+  <div class="uptime-wrap">
+
+    <!-- OVERALL STATUS -->
+    <div class="uptime-overall">
+      <div class="uptime-eyebrow">General uptime</div>
+      <div class="uptime-big-num" id="ut-overall-pct">—</div>
+      <div class="uptime-big-label" id="ut-overall-label">Calculating...</div>
+    </div>
+
+    <!-- TRUENAS CARD -->
+    <div class="ut-card">
+      <div class="ut-card-header">
+        <div class="ut-card-left">
+          <div class="ut-dot" id="ut-nas-dot"></div>
+          <div>
+            <div class="ut-card-name">TrueNAS SCALE</div>
+            <div class="ut-card-session" id="ut-nas-session">—</div>
+          </div>
+        </div>
+        <div class="ut-pcts" id="ut-nas-pcts">
+          <div class="ut-pct-item"><span class="ut-pct-val" id="ut-nas-30">—</span><span class="ut-pct-label">30d</span></div>
+          <div class="ut-pct-item"><span class="ut-pct-val" id="ut-nas-180">—</span><span class="ut-pct-label">6m</span></div>
+          <div class="ut-pct-item"><span class="ut-pct-val" id="ut-nas-365">—</span><span class="ut-pct-label">1y</span></div>
+        </div>
+      </div>
+      <div class="ut-bar-wrap">
+        <div class="ut-bar" id="ut-nas-bar"></div>
+      </div>
+      <div class="ut-bar-labels">
+        <span>90 days ago</span>
+        <span>Today</span>
+      </div>
+    </div>
+
+    <div style="height:2rem"></div>
+
+    <!-- SERVICES -->
+    <div class="uptime-eyebrow" style="margin-bottom:16px">Services</div>
+
+    <div class="ut-services" id="ut-services-list">
+      <!-- populated by JS -->
+    </div>
+
+  </div>
+</div>
+
+<!-- CONTACT PAGE -->
+<div id="page-contact" style="display:none">
+  <div class="contact-wrap">
+
+    <div class="contact-hero">
+      <div class="contact-eyebrow">Get in touch</div>
+      <h1 class="contact-h1">MrBoony</h1>
+      <p class="contact-sub">Got a question about the setup, want Nextcloud access, or just want to chat — feel free to reach out. I'll answer what I can.</p>
+    </div>
+
+    <div class="contact-cards">
+
+      <a class="contact-card" href="mailto:mrboony@linuslinus.com" data-contact="email-href">
+        <div class="contact-card-icon">✉</div>
+        <div class="contact-card-body">
+          <div class="contact-card-label">Email</div>
+          <div class="contact-card-value" data-contact="email">mrboony@linuslinus.com</div>
+          <div class="contact-card-hint">Best for Nextcloud access requests</div>
+        </div>
+        <div class="contact-card-arrow">↗</div>
+      </a>
+
+      <a class="contact-card" href="https://github.com/boony-moony" target="_blank" rel="noopener" data-contact="github-href">
+        <div class="contact-card-icon">⌥</div>
+        <div class="contact-card-body">
+          <div class="contact-card-label">GitHub</div>
+          <div class="contact-card-value" data-contact="github">boony-moony</div>
+          <div class="contact-card-hint">Projects, scripts, and Portman</div>
+        </div>
+        <div class="contact-card-arrow">↗</div>
+      </a>
+
+      <div class="contact-card contact-card--copy" onclick="copyDiscord()">
+        <div class="contact-card-icon">◈</div>
+        <div class="contact-card-body">
+          <div class="contact-card-label">Discord</div>
+          <div class="contact-card-value" data-contact="discord">boony_moony</div>
+          <div class="contact-card-hint" id="discord-hint">Click to copy username</div>
+        </div>
+        <div class="contact-card-arrow" id="discord-arrow">⎘</div>
+      </div>
+
+    </div>
+
+    <div class="contact-info-cards">
+
+      <div class="info-card">
+        <div class="info-card-icon">☁</div>
+        <div class="info-card-body">
+          <div class="info-card-title">Nextcloud</div>
+          <div class="info-card-text">Self-hosted cloud storage, available on request. Up to 20 GB free, optionally encrypted. Accounts are created manually — use the email above to ask.</div>
+          <div class="m-tag tg" style="margin-top:8px">Invite only</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon">⬆</div>
+        <div class="info-card-body">
+          <div class="info-card-title">Upload limit</div>
+          <div class="info-card-text">Cloudflare caps file uploads at 100 MB on the free plan. Nextcloud automatically chunks large files on upload, so multi-gigabyte transfers work fine through the web interface.</div>
+          <div class="m-tag ty" style="margin-top:8px">100 MB CF cap</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon">◎</div>
+        <div class="info-card-body">
+          <div class="info-card-title">Services</div>
+          <div class="info-card-text">8 services running across TrueNAS and the Linode VPS. All public traffic proxied through Cloudflare — no origin IPs exposed. Additional private services exist, accessible only over Tailscale.</div>
+          <div class="m-tag tg" style="margin-top:8px">All up</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon">⬡</div>
+        <div class="info-card-body">
+          <div class="info-card-title">linuslinus.com</div>
+          <div class="info-card-text">All subdomains route through a single Cloudflare Tunnel to the NAS. DNS managed via Cloudflare, A record to Linode VPS.</div>
+          <div class="m-tag tb" style="margin-top:8px">CF proxied</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="contact-note">
+      <div class="contact-note-label">Nextcloud access</div>
+      <p>Accounts are created manually. You can request up to 20 GB of free storage, optionally encrypted. Send an email with a brief reason and I'll get back to you.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const nodes = {
+  internet:{eyebrow:'External',name:'Internet / WAN',role:'Public traffic entry point',desc:'All inbound public traffic hits Cloudflare first — your origin IPs are never exposed directly. DNS is fully proxied.',kv:[{k:'Entry point',v:'Cloudflare edge',cls:'ok'},{k:'Origin exposed',v:'No — CF proxied',cls:'ok'},{k:'Protocol',v:'HTTPS / TLS 1.3'}],conns:['Cloudflare'],services:[]},
+  cloudflare:{eyebrow:'CDN / DNS',name:'Cloudflare',role:'DNS, proxy, tunnel termination',desc:'Your primary domain linuslinus.com lives here. Handles DNS, proxies traffic to Linode, manages the CF Tunnel to TrueNAS, and stores the Portman-managed A and SRV records.',kv:[{k:'Domain',v:'linuslinus.com',cls:'info'},{k:'A record',v:'172.232.147.23'},{k:'SRV record',v:'Minecraft DNS'},{k:'Tunnel mode',v:'Token (CF agent)',cls:'ok'},{k:'Portman sync',v:'A + SRV records',cls:'ok'}],conns:['Internet','Linode','TrueNAS'],services:[]},
+  linode:{eyebrow:'VPS — Akamai / Linode',name:'Linode VPS',role:'WireGuard relay + reverse proxy',desc:'Your internet-facing relay. Runs WireGuard, nginx, certbot, and Portman — a custom-built Flask web UI for managing iptables DNAT port forwarding. Portman also handles Cloudflare A/SRV record management, a live DNS zone viewer, and TOTP auth (pure Python RFC 6238).',kv:[{k:'IP',v:'172.232.147.23'},{k:'WG interface',v:'wg0 :51820'},{k:'WG peers',v:'[redacted]'},{k:'nginx',v:':80 / :443',cls:'ok'},{k:'certbot',v:'TLS — active',cls:'ok'},{k:'Portman auth',v:'TOTP (RFC 6238)',cls:'ok'},{k:'CF integration',v:'A + SRV records',cls:'ok'},{k:'DEMO_MODE',v:'Available'}],conns:['Cloudflare','TrueNAS (WireGuard)'],services:[{name:'WireGuard',port:':51820'},{name:'nginx',port:':80/:443'},{name:'Portman',port:':5000'},{name:'certbot',port:'auto-renew'}],link:{url:'https://github.com/boony-moony/portman',label:'Portman on GitHub'}},
+  truenas:{eyebrow:'NAS + Game Server — TrueNAS SCALE',name:'TrueNAS SCALE',role:'Primary storage, app host & game server',desc:'Your LAN server running TrueNAS SCALE. Hosts all self-hosted apps via containers and doubles as the dedicated game server (i7-14700F, 32 GB DDR4, 3× 1 TB SSD). Connected to the internet through Cloudflare Tunnel (token mode) and Tailscale. Crafty Controller mounts live at /mnt/.ix-apps/app_mounts/crafty-4/. GPU upgrade to RTX 3050 and 2× HDDs planned.',kv:[{k:'LAN IP',v:'[redacted]'},{k:'WG peer IP',v:'[redacted]',cls:'info'},{k:'CF Tunnel',v:'Token mode',cls:'ok'},{k:'Tailscale',v:'Active',cls:'ok'},{k:'CPU',v:'i7-14700F'},{k:'GPU',v:'GTX 970',cls:'warn'},{k:'GPU plan',v:'RTX 3050',cls:'warn'},{k:'RAM',v:'32 GB DDR4'},{k:'Storage',v:'3× 1 TB SSD'},{k:'RGB',v:'None ✓',cls:'ok'}],conns:['Linode (WireGuard)','Cloudflare (Tunnel)'],services:[]},
+  services:{eyebrow:'Apps — TrueNAS SCALE',name:'Self-hosted services',role:'Containers on TrueNAS',desc:'Self-hosted services running as containers on TrueNAS SCALE, exposed through Cloudflare Tunnel or Tailscale.',kv:[],conns:['TrueNAS SCALE','Cloudflare (Tunnel)'],services:[],dynamic:true},
+  cfdomains:{eyebrow:'Cloudflare Tunnel — linuslinus.com',name:'CF Tunnel Domains',role:'6 subdomains proxied via cfargotunnel',desc:'All six subdomains are CNAME-aliased to the same Cloudflare Tunnel endpoint (f5339c93-….cfargotunnel.com), which routes traffic through the CF agent running on TrueNAS. The apex domain uses CNAME flattening since a bare CNAME is normally not allowed at the zone root.',kv:[{k:'linuslinus.com',v:'CNAME flattened',cls:'ok'},{k:'nextcloud.…',v:'CF Tunnel',cls:'ok'},{k:'matrix.…',v:'CF Tunnel',cls:'ok'},{k:'element.…',v:'CF Tunnel',cls:'ok'},{k:'crafty.…',v:'CF Tunnel',cls:'ok'},{k:'linkwarden.…',v:'CF Tunnel',cls:'ok'},{k:'Proxied',v:'Yes — orange cloud'},{k:'TTL',v:'auto'}],conns:['Cloudflare','TrueNAS (CF agent)'],services:[]},
+
+};
+
+const selRing = document.getElementById('sel-ring');
+const selPos = {internet:[350,30,22],cloudflare:[350,116,26],linode:[350,216,30],truenas:[163,340,28],services:[163,454,26],cfdomains:[510,196,28]};
+const ringCol = {cloudflare:'#E8960A',truenas:'#346538',services:'#346538',cfdomains:'#E8960A'};
+
+// ── STATUS CONFIG — edit this when something is down ──────────────────────────
+// Global state — declared early so all functions can reference them
+let containerSettings = {};
+let dragSrc = null;
+
+const STATUS = {
+  state: 'operational', // 'operational' | 'degraded' | 'down'
+  message: 'All systems operational. This is a homelab — occasional downtime from power outages or maintenance is possible.',
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildHTML(n){
+  let h=`<div class="detail-eyebrow">${n.eyebrow}</div><div class="detail-name">${n.name}</div><div class="detail-role">${n.role}</div><hr class="detail-divider"><div class="detail-kv">`;
+  n.kv.forEach(r=>{h+=`<div class="kv-row"><span class="kv-k">${r.k}</span><span class="kv-v${r.cls?' '+r.cls:''}">${r.v}</span></div>`;});
+  h+=`</div>`;
+  if(n.services.length){h+=`<hr class="detail-divider"><div class="sec-label" style="margin-bottom:8px">Running services</div><div class="services-list">`;n.services.forEach(s=>{h+=`<div class="svc-row"><div class="svc-dot"></div><div class="svc-name">${s.name}</div><div class="svc-port">${s.port}</div></div>`;});h+=`</div>`;}
+  if(n.conns.length){h+=`<hr class="detail-divider"><div class="sec-label" style="margin-bottom:8px">Connected to</div><div class="conn-list">`;n.conns.forEach(c=>{h+=`<div class="conn-badge">${c}</div>`;});h+=`</div>`;}
+  h+=`<div class="detail-desc">${n.desc}</div>`;
+  if(n.link){
+    h+=`<a class="detail-link-btn" href="${n.link.url}" target="_blank" rel="noopener">${n.link.label} ↗</a>`;
+  }
+  return h;
+}
+
+function isMobile(){return window.innerWidth<=768}
+
+function updateServicesNode() {
+  const graphSvcs = UPTIME_DATA.services.filter(s => containerSettings[s.id]?.showGraph === true);
+  const countEl = document.getElementById('svc-node-count');
+  if(countEl) countEl.textContent = '×' + graphSvcs.length;
+  if(nodes && nodes.services) {
+    nodes.services.role = graphSvcs.length + ' container' + (graphSvcs.length !== 1 ? 's' : '') + ' on TrueNAS';
+    nodes.services.kv = graphSvcs.map(s => ({
+      k: containerSettings[s.id]?.label || s.name,
+      v: s.state === 'up' ? 'online' : s.state === 'maintenance' ? 'maintenance' : s.state === 'down' ? 'offline' : s.state || '—',
+    }));
+  }
+  // also update TrueNAS node running services list
+  if(nodes && nodes.truenas) {
+    nodes.truenas.services = graphSvcs.map(s => ({
+      name: containerSettings[s.id]?.label || s.name,
+      port: containerSettings[s.id]?.port || '',
+    }));
+  }
+}
+
+function select(id){
+  const n=nodes[id];if(!n)return;
+  const [cx,cy,r]=selPos[id];
+  selRing.setAttribute('cx',cx);selRing.setAttribute('cy',cy);selRing.setAttribute('r',r+6);
+  selRing.setAttribute('opacity','1');selRing.setAttribute('stroke',ringCol[id]||'#111');
+  if(isMobile()){
+    document.getElementById('detail-mobile').innerHTML=buildHTML(n);
+    const sheet=document.getElementById('sheet');
+    const overlay=document.getElementById('overlay');
+    overlay.style.display='block';
+    sheet.style.display='block';
+    requestAnimationFrame(()=>sheet.classList.add('open'));
+  } else {
+    document.getElementById('empty-state').style.display='none';
+    const d=document.getElementById('detail');
+    d.innerHTML=buildHTML(n)+`<button class="close-btn" onclick="closeDetail()">← Clear</button>`;
+    d.style.display='block';
+  }
+}
+
+function closeDetail(){
+  selRing.setAttribute('opacity','0');
+  const sheet=document.getElementById('sheet');
+  const overlay=document.getElementById('overlay');
+  sheet.classList.remove('open');
+  setTimeout(()=>{sheet.style.display='none';overlay.style.display='none';},320);
+  document.getElementById('empty-state').style.display='';
+  document.getElementById('detail').style.display='none';
+}
+
+(function initStatus() {
+  const bar = document.getElementById('status-bar');
+  const dot = document.getElementById('status-indicator');
+  const txt = document.getElementById('status-text');
+  bar.classList.add(STATUS.state);
+  txt.textContent = STATUS.message;
+  // hide if this exact message was already dismissed
+  const key = 'dismissed-status';
+  const msgHash = STATUS.state + '|' + STATUS.message;
+  if(localStorage.getItem(key) === msgHash) {
+    bar.style.display = 'none';
+  }
+})();
+
+function dismissStatus() {
+  const bar = document.getElementById('status-bar');
+  const msgHash = STATUS.state + '|' + STATUS.message;
+  localStorage.setItem('dismissed-status', msgHash);
+  bar.style.display = 'none';
+}
+
+// ── PACKET SIMULATION ──────────────────────────────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const layer  = document.getElementById('packet-layer');
+const svg    = document.getElementById('graph-svg');
+
+// Node centres (SVG coordinate space)
+const POS = {
+  internet:   [350, 30],
+  cloudflare: [350,116],
+  cfdomains:  [510,196],
+  linode:     [350,216],
+  truenas:    [163,340],
+  services:   [163,454],
+};
+
+// Domain pills X positions (approx centre of each pill)
+const DOMAIN_POS = [
+  [614,183],   // linuslinus.com
+  [614,209],   // nextcloud
+  [614,235],   // matrix
+  [614,261],   // element
+  [614,287],   // crafty
+  [614,313],   // linkwarden
+];
+
+// Colours per path type
+const COL = {
+  default:   '#8a8680',
+  cf:        '#c8a040',
+  wg:        '#5a9fd4',
+  green:     '#6abf74',
+  blue:      '#5a9fd4',
+};
+
+// Animate a dot along a polyline of points
+// Flash a node's orbit ring when a packet arrives
+function flashNode(pos) {
+  if(!pos) return;
+  const [tx, ty] = pos;
+  // find orbit circle at this position
+  const orbits = document.querySelectorAll('.orbit');
+  orbits.forEach(o => {
+    const cx = parseFloat(o.getAttribute('cx'));
+    const cy = parseFloat(o.getAttribute('cy'));
+    if(Math.abs(cx - tx) < 5 && Math.abs(cy - ty) < 5) {
+      const origOp = o.getAttribute('opacity');
+      o.setAttribute('opacity', '1');
+      o.style.filter = 'drop-shadow(0 0 3px currentColor)';
+      setTimeout(() => {
+        o.setAttribute('opacity', origOp);
+        o.style.filter = '';
+      }, 500);
+    }
+  });
+}
+
+function spawnPacket(points, color, duration, onDone) {
+  if(!layer || points.length < 2) return;
+  const dot = document.createElementNS(SVG_NS, 'circle');
+  dot.setAttribute('r', '3');
+  dot.setAttribute('fill', color);
+  dot.setAttribute('opacity', '0.9');
+  layer.appendChild(dot);
+
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const total = points.length - 1;
+    const seg = Math.min(Math.floor(t * total), total - 1);
+    const segT = Math.min((t * total) - seg, 1);
+    const p1 = points[seg], p2 = points[Math.min(seg+1, total)];
+    if(!p1 || !p2) { dot.remove(); if(onDone) onDone(); return; }
+    dot.setAttribute('cx', p1[0] + (p2[0]-p1[0])*segT);
+    dot.setAttribute('cy', p1[1] + (p2[1]-p1[1])*segT);
+    dot.setAttribute('opacity', t < 0.1 ? t*9 : t > 0.85 ? (1-t)/0.15 : 0.9);
+    if(t < 1) requestAnimationFrame(step);
+    else { dot.remove(); flashNode(points[points.length-1]); if(onDone) onDone(); }
+  }
+  requestAnimationFrame(step);
+}
+
+// Helper: delay
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// ── FLOW DEFINITIONS ─────────────────────────────────────────────────────────
+
+// Internet → CF → Linode → Portman (DNS / A record traffic)
+async function flowDNS() {
+  spawnPacket([POS.internet, POS.cloudflare], COL.default, 900);
+  await wait(850);
+  spawnPacket([POS.cloudflare, POS.linode], COL.default, 750);
+  await wait(700);
+}
+
+// Internet → CF → CFDomains → domain pill → TrueNAS → Services
+async function flowDomain(domainIdx) {
+  const pill = DOMAIN_POS[domainIdx];
+  spawnPacket([POS.internet, POS.cloudflare], COL.cf, 800);
+  await wait(750);
+  spawnPacket([POS.cloudflare, POS.cfdomains], COL.cf, 650);
+  await wait(500);
+  spawnPacket([POS.cfdomains, pill], COL.cf, 450);
+  await wait(420);
+  spawnPacket([pill, POS.cfdomains], COL.cf, 420);
+  await wait(380);
+  spawnPacket([POS.cfdomains, POS.truenas], COL.cf, 1000);
+  await wait(950);
+  spawnPacket([POS.truenas, POS.services], COL.green, 550);
+}
+
+// WireGuard keepalive — alternates direction
+let wgDir = 1;
+async function flowWireGuard() {
+  if(wgDir === 1) {
+    spawnPacket([POS.linode, POS.truenas], COL.wg, 1100);
+  } else {
+    spawnPacket([POS.truenas, POS.linode], COL.wg, 1100);
+  }
+  wgDir *= -1;
+}
+
+// CF Tunnel keepalive
+async function flowTunnel() {
+  spawnPacket([POS.cloudflare, POS.truenas], COL.cf, 1200);
+}
+
+// TrueNAS → Services internal pulse
+async function flowInternal() {
+  spawnPacket([POS.truenas, POS.services], COL.green, 500);
+}
+
+// ── SCHEDULER ────────────────────────────────────────────────────────────────
+function rand(min, max) { return min + Math.random() * (max - min); }
+
+async function scheduleForever() {
+  while(true) {
+    const roll = Math.random();
+
+    if(roll < 0.30) {
+      const d1 = Math.floor(Math.random() * DOMAIN_POS.length);
+      flowDomain(d1);
+      if(Math.random() < 0.35) {
+        await wait(rand(400, 900));
+        const d2 = Math.floor(Math.random() * DOMAIN_POS.length);
+        flowDomain(d2);
+      }
+      await wait(rand(2500, 4500));
+
+    } else if(roll < 0.50) {
+      flowDNS();
+      await wait(rand(1800, 3500));
+
+    } else if(roll < 0.68) {
+      flowWireGuard();
+      await wait(rand(8000, 13000));
+
+    } else if(roll < 0.80) {
+      flowTunnel();
+      await wait(rand(4000, 7000));
+
+    } else if(roll < 0.92) {
+      flowInternal();
+      await wait(rand(1200, 2800));
+
+    } else {
+      await wait(rand(800, 2000));
+    }
+  }
+}
+
+// Start after a short delay so page renders first
+setTimeout(scheduleForever, 1200);
+// ─────────────────────────────────────────────────────────────────────────────
+
+// suppress cross-origin script errors (e.g. CDN scripts)
+window.addEventListener('error', function(e) {
+  if(e.message === 'Script error.' || e.message === 'Script error') {
+    e.preventDefault();
+    return true;
+  }
+});
+
+function tick(){document.getElementById('clk').textContent=new Date().toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Europe/Oslo'});}
+tick();setInterval(tick,1000);
+
+// ── UPTIME MOCK DATA — replace with status.json fetch when backend is ready ───
+const UPTIME_DATA = {
+  overall: { pct30: null, label: 'No data yet — checker not connected.' },
+  nas: {
+    state: 'unknown',
+    session: 'Pending',
+    pct30: null, pct180: null, pct365: null,
+    history: Array.from({length:90}, () => 'unknown')
+  },
+  services: []
+};
+
+function fmtPct(v){ return (v !== null && v !== undefined) ? (v >= 99.95 ? '100%' : v.toFixed(1)+'%') : '—'; }
+
+function buildBar(history, containerId) {
+  const bar = document.getElementById(containerId);
+  if(!bar) return;
+  bar.innerHTML = history.map(s =>
+    `<div class="ut-block ${s}" title="${s}"></div>`
+  ).join('');
+}
+
+function renderHome() {
+  // reset
+  const dot    = document.getElementById('pulse-dot');
+  const hero   = document.getElementById('home-hero');
+  const cards  = document.querySelectorAll('.home-svc-card');
+  const note   = document.getElementById('home-note');
+  const rings  = document.querySelectorAll('.pulse-ring');
+  if(!dot) return;
+
+  dot.classList.remove('visible');
+  hero.classList.remove('visible');
+  cards.forEach(c => c.classList.remove('visible'));
+  note.classList.remove('visible');
+  rings.forEach(r => r.classList.remove('fire'));
+
+  // sequence: pulse → dot appears → hero → cards cascade → note
+  setTimeout(() => {
+    rings.forEach((r, i) => setTimeout(() => r.classList.add('fire'), i * 180));
+  }, 100);
+
+  setTimeout(() => dot.classList.add('visible'), 200);
+  setTimeout(() => hero.classList.add('visible'), 700);
+  setTimeout(() => {
+    cards.forEach(c => c.classList.add('visible'));
+  }, 900);
+  setTimeout(() => note.classList.add('visible'), 1400);
+  const divider = document.getElementById('home-divider');
+  if(divider) setTimeout(() => divider.classList.add('visible'), 900);
+
+  // build service cards from live public services
+  renderHomeCards();
+}
+
+function renderHomeCards() {
+  const container = document.getElementById('home-services');
+  if(!container) return;
+
+  const homeSvcs = UPTIME_DATA.services
+    .filter(svc => svc.showHome === true)
+    .sort((a,b) => (a.homeOrder||99) - (b.homeOrder||99));
+
+  if(homeSvcs.length === 0) {
+    container.innerHTML = `<div style="padding:32px 0;text-align:center">
+      <div style="font-size:.82rem;color:var(--faint);line-height:1.7">
+        No services configured for the home page yet.<br>
+        <span style="font-size:.75rem">Enable services in the admin panel.</span>
+      </div>
+    </div>`;
+    return;
+  }
+
+  function homeRow(svc, i) {
+    const cfg = containerSettings[svc.id] || {};
+    const name = cfg.label || svc.name;
+    const desc = cfg.desc || '';
+    const stateClass = svc.status === 'maintenance' ? 'maintenance'
+      : svc.status === 'inactive' ? 'unknown'
+      : (svc.state || 'unknown');
+    const stateLabel = svc.status === 'maintenance' ? 'maintenance'
+      : svc.status === 'inactive' ? 'inactive'
+      : svc.state === 'up' ? 'online'
+      : svc.state === 'down' ? 'offline'
+      : svc.state === 'degraded' ? 'degraded' : '—';
+    return `<div class="home-svc-row" style="--i:${i}">
+      <div class="home-svc-dot ${stateClass}"></div>
+      <div class="home-svc-name">${name}</div>
+      ${desc ? `<div class="home-svc-desc">${desc}</div>` : '<div class="home-svc-desc"></div>'}
+      <div class="home-svc-state ${stateClass}">${stateLabel}</div>
+    </div>`;
+  }
+
+  container.innerHTML = homeSvcs.map((s,i) => homeRow(s,i)).join('');
+  requestAnimationFrame(() => {
+    container.querySelectorAll('.home-svc-row').forEach(row => {
+      requestAnimationFrame(() => row.classList.add('visible'));
+    });
+  });
+}
+
+function renderUptime() {
+  const d = UPTIME_DATA;
+
+  const overallPct = document.getElementById('ut-overall-pct');
+  const overallLbl = document.getElementById('ut-overall-label');
+  const nasDot     = document.getElementById('ut-nas-dot');
+  const nasSess    = document.getElementById('ut-nas-session');
+  const nas30      = document.getElementById('ut-nas-30');
+  const nas180     = document.getElementById('ut-nas-180');
+  const nas365     = document.getElementById('ut-nas-365');
+  const list       = document.getElementById('ut-services-list');
+
+  // elements don't exist if page hasn't been visited yet — skip silently
+  if(!nasDot || !list) return;
+
+  const hasData = d.overall.pct30 !== null && d.overall.pct30 !== undefined;
+  overallPct.textContent = hasData ? fmtPct(d.overall.pct30) : '—';
+  overallLbl.textContent = d.overall.label || 'No data yet.';
+
+  nasDot.className  = 'ut-dot ' + d.nas.state;
+  nasSess.textContent = d.nas.session;
+  nas30.textContent   = fmtPct(d.nas.pct30);
+  nas180.textContent  = fmtPct(d.nas.pct180);
+  nas365.textContent  = fmtPct(d.nas.pct365);
+  buildBar(d.nas.history, 'ut-nas-bar');
+
+  const visibleSvcs = d.services.filter(s => s.visible === true);
+  // not-in-use containers are always hidden, so visibleSvcs are all in-use
+  function renderSvcCard(s, i) {
+    return `<div class="ut-card">
+      <div class="ut-card-header">
+        <div class="ut-card-left">
+          <div class="ut-dot ${s.status === 'maintenance' ? 'maintenance' : s.status === 'inactive' ? 'unknown' : s.state}"></div>
+          <div>
+            <div class="ut-card-name">${s.name}</div>
+            ${s.status === 'inactive'    ? '<div style="font-size:.7rem;color:var(--faint);margin-top:1px">Not actively maintained</div>' : ''}
+            ${s.status === 'maintenance' ? '<div style="font-size:.7rem;color:var(--muted);margin-top:1px">Under maintenance</div>' : ''}
+          </div>
+        </div>
+        <div class="ut-pcts">
+          <div class="ut-pct-item"><span class="ut-pct-val">${fmtPct(s.pct30)}</span><span class="ut-pct-label">30d</span></div>
+          <div class="ut-pct-item"><span class="ut-pct-val">${fmtPct(s.pct180)}</span><span class="ut-pct-label">6m</span></div>
+          <div class="ut-pct-item"><span class="ut-pct-val">${fmtPct(s.pct365)}</span><span class="ut-pct-label">1y</span></div>
+        </div>
+      </div>
+      <div class="ut-bar-wrap"><div class="ut-bar" id="ut-svc-bar-${i}"></div></div>
+      <div class="ut-bar-labels"><span>90 days ago</span><span>Today</span></div>
+    </div>`;
+  }
+
+  list.innerHTML = visibleSvcs.map((s,i) => renderSvcCard(s,i)).join('');
+  visibleSvcs.forEach((s,i) => buildBar(s.history, `ut-svc-bar-${i}`));
+}
+
+function showPage(id, btn) {
+  ['home','map','contact','uptime','admin'].forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if(el) el.style.display = p === id ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id === 'uptime') renderUptime();
+  if(id === 'admin') renderAdmin();
+  if(id === 'home') { try { renderHome(); } catch(e) { console.warn('renderHome:', e); } }
+  // remember last page (not admin)
+  if(id !== 'admin') localStorage.setItem('last-page', id);
+}
+
+// Check for ?admin in URL on load
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    ['adm-sidebar-left','adm-sidebar-right'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.visibility = 'hidden';
+    });
+    if(window.location.search.includes('admin') || window.location.hash === '#admin') {
+      showPage('admin', document.getElementById('admin-nav-btn'));
+      return;
+    }
+    const lastPage = localStorage.getItem('last-page') || 'home';
+    const pageIds  = ['home','map','contact','uptime'];
+    const id       = pageIds.includes(lastPage) ? lastPage : 'home';
+    const btnIndex = {'home':0,'map':1,'uptime':2,'contact':3};
+    const btn      = document.querySelectorAll('.nav-btn')[btnIndex[id] ?? 0];
+    showPage(id, btn);
+  } catch(e) { console.warn('init:', e); }
+});
+
+function copyDiscord() {
+  navigator.clipboard.writeText('boony_moony').then(() => {
+    document.getElementById('discord-hint').textContent = 'Copied!';
+    document.getElementById('discord-arrow').textContent = '✓';
+    setTimeout(() => {
+      document.getElementById('discord-hint').textContent = 'Click to copy username';
+      document.getElementById('discord-arrow').textContent = '⎘';
+    }, 2000);
+  });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+
+const ADMIN_STORAGE_KEY = 'admin-settings';
+let SESSION_TOKEN = sessionStorage.getItem('admin-token') || '';
+
+function authHeaders() {
+  return {'Content-Type': 'application/json', 'X-Session-Token': SESSION_TOKEN};
+}
+
+async function authedFetch(url, opts={}) {
+  const res = await fetch(url, {...opts, headers: {...(opts.headers||{}), ...authHeaders()}});
+  if(res.status === 401) {
+    // token expired or container restarted — force re-auth
+    SESSION_TOKEN = '';
+    sessionStorage.removeItem('admin-token');
+    renderAdmin();
+    throw new Error('session expired');
+  }
+  return res;
+}
+
+function loadAdminSettings() {
+  try {
+    const saved = localStorage.getItem(ADMIN_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch(e) { return null; }
+}
+
+function saveAdminSettings(settings) {
+  localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(settings));
+  if(!SESSION_TOKEN) return;
+  authedFetch('/api/save', {
+    method: 'POST',
+    body: JSON.stringify(settings)
+  }).catch(() => {});
+}
+
+function applyAdminSettings() {
+  const s = loadAdminSettings();
+  if(!s) return;
+  // contact info
+  if(s.email) {
+    document.querySelectorAll('[data-contact="email"]').forEach(el => el.textContent = s.email);
+    document.querySelectorAll('[data-contact="email-href"]').forEach(el => el.href = 'mailto:' + s.email);
+  }
+  if(s.github) {
+    document.querySelectorAll('[data-contact="github"]').forEach(el => el.textContent = s.github);
+    document.querySelectorAll('[data-contact="github-href"]').forEach(el => el.href = 'https://github.com/' + s.github);
+  }
+  if(s.discord) {
+    document.querySelectorAll('[data-contact="discord"]').forEach(el => el.textContent = s.discord);
+  }
+  // status
+  if(s.statusState || s.statusMessage) {
+    if(s.statusState) STATUS.state = s.statusState;
+    if(s.statusMessage) STATUS.message = s.statusMessage;
+    const bar = document.getElementById('status-bar');
+    const txt = document.getElementById('status-text');
+    if(bar && txt) {
+      bar.className = 'status-bar ' + STATUS.state;
+      txt.textContent = STATUS.message;
+      const msgHash = STATUS.state + '|' + STATUS.message;
+      if(localStorage.getItem('dismissed-status') === msgHash)
+        bar.style.display = 'none';
+    }
+  }
+  // container settings
+  if(s.containers) {
+    Object.entries(s.containers).forEach(([name,cfg]) => { containerSettings[name] = cfg; });
+    applyContainerSettings();
+  }
+  // node overrides
+  if(s.nodeOverrides) applyNodeOverrides(s.nodeOverrides);
+  // home card overrides
+  if(s.homeCards) applyHomeCards(s.homeCards);
+  // service visibility now handled by container settings — skip legacy serviceVisibility
+}
+
+let adminPollInterval = null;
+
+function renderAdmin() {
+  const locked = document.getElementById('admin-locked');
+  const panel  = document.getElementById('admin-panel');
+  if(!locked || !panel) return;
+  if(SESSION_TOKEN) {
+    locked.style.display = 'none';
+    panel.style.display  = 'block';
+    const sl = document.getElementById('adm-sidebar-left');
+    const sr = document.getElementById('adm-sidebar-right');
+    if(sl) sl.style.visibility = '';
+    if(sr) sr.style.visibility = '';
+    populateAdminPanel();
+    // poll container list every 15s while admin is open
+    clearInterval(adminPollInterval);
+    adminPollInterval = setInterval(() => {
+      if(document.getElementById('page-admin')?.style.display !== 'none') {
+        loadDiscoveredContainers();
+        loadDeletedContainers();
+      } else {
+        clearInterval(adminPollInterval);
+      }
+    }, 15000);
+  } else {
+    locked.style.display = 'flex';
+    panel.style.display  = 'none';
+    clearInterval(adminPollInterval);
+    initAdminLock();
+  }
+}
+
+async function adminLogin() {
+  const input = document.getElementById('admin-code-input');
+  const err   = document.getElementById('admin-pass-err');
+  const code  = input.value.trim();
+  if(code.length !== 6) {
+    err.textContent = 'Enter the 6-digit code.';
+    return;
+  }
+  try {
+    const res  = await fetch('/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code})
+    });
+    const data = await res.json();
+    if(data.ok) {
+      SESSION_TOKEN = data.token;
+      sessionStorage.setItem('admin-token', SESSION_TOKEN);
+      renderAdmin();
+      loadDiscoveredContainers();
+      fetchFullHistory();
+      fetchSettings();
+    } else {
+      err.textContent = 'Invalid code. Try again.';
+      input.value = '';
+      input.focus();
+    }
+  } catch(e) {
+    err.textContent = 'Could not reach server.';
+  }
+}
+
+function showTotpInput() {
+  document.getElementById('admin-setup').style.display = 'none';
+  document.getElementById('admin-totp').style.display  = 'flex';
+  document.getElementById('admin-code-input').focus();
+}
+
+async function initAdminLock() {
+  // always hide sidebars until authenticated
+  const sl = document.getElementById('adm-sidebar-left');
+  const sr = document.getElementById('adm-sidebar-right');
+  if(sl) sl.style.visibility = 'hidden';
+  if(sr) sr.style.visibility = 'hidden';
+  // check if session token still valid
+  if(SESSION_TOKEN) {
+    try {
+      const res = await authedFetch('/api/settings');
+      if(res.ok) { renderAdmin(); return; }
+    } catch(e) {
+      return;
+    }
+  }
+  // check if setup needed
+  try {
+    const setupRes  = await fetch('/api/totp-setup-needed');
+    const setupData = await setupRes.json();
+    if(setupData.setup) {
+      // first time — show QR
+      const uriRes  = await fetch('/api/totp-uri');
+      const uriData = await uriRes.json();
+      document.getElementById('totp-secret-display').textContent = uriData.secret;
+      drawQR(uriData.uri);
+      document.getElementById('admin-setup').style.display = 'flex';
+    } else {
+      document.getElementById('admin-totp').style.display = 'flex';
+      document.getElementById('admin-code-input').focus();
+    }
+  } catch(e) {
+    document.getElementById('admin-totp').style.display = 'flex';
+  }
+}
+
+// Simple QR code using qrcodejs via CDN
+function drawQR(uri) {
+  const el = document.getElementById('totp-qr');
+  if(!el) return;
+  // No external requests — show secret string to copy into authenticator
+  const secret = uri.match(/secret=([^&]+)/)?.[1] || '';
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px">
+      <div style="font-size:.75rem;color:#555;text-align:center">Open your authenticator app<br>and enter this secret manually</div>
+      <div style="font-family:var(--font-mono);font-size:1rem;letter-spacing:.15em;color:#111;background:#f5f5f5;padding:10px 16px;border-radius:6px;user-select:all">${secret}</div>
+      <div style="font-size:.7rem;color:#888">Tap the code above to select it</div>
+    </div>`;
+}
+
+// ── CONTAINER ADMIN ──────────────────────────────────────────────────────────
+
+
+function getContainerSetting(name) {
+  return containerSettings[name] || {
+    label: name, desc: '', showHome: false, showUptime: true,
+    showGraph: false, homeOrder: 99, uptimeOrder: 99
+  };
+}
+
+async function saveContainerSetting(name) {
+  const s = loadAdminSettings() || {};
+  if(!s.containers) s.containers = {};
+  s.containers[name] = containerSettings[name];
+  saveAdminSettings(s);
+  // also update public flag in DB
+  const showAny = containerSettings[name].showHome || containerSettings[name].showUptime;
+  try {
+    await authedFetch('/api/container/toggle-public', {
+      method: 'POST',
+      body: JSON.stringify({name, public: showAny ? 1 : 0})
+    });
+  } catch(e) {}
+}
+
+async function loadDiscoveredContainers() {
+  const el = document.getElementById('adm-containers-list');
+  if(!el) return;
+
+  // load saved settings
+  const s = loadAdminSettings() || {};
+  if(s.containers) {
+    Object.entries(s.containers).forEach(([name, cfg]) => {
+      containerSettings[name] = cfg;
+    });
+  }
+
+  try {
+    const res = await authedFetch('/api/containers');
+    if(!res.ok) throw new Error();
+    const containers = await res.json();
+    const keys = Object.keys(containers);
+
+    if(keys.length === 0) {
+      el.innerHTML = '<div style="font-size:.82rem;color:var(--muted)">No containers discovered yet.</div>';
+      return;
+    }
+
+    // ensure defaults for new containers with sequential ordering
+    keys.forEach((name, i) => {
+      if(!containerSettings[name]) {
+        containerSettings[name] = {
+          label:      name,
+          desc:       '',
+          showHome:   false,
+          showUptime: containers[name].showUptime === true,
+          homeOrder:  containers[name].homeOrder  || (i + 1),
+          uptimeOrder:containers[name].uptimeOrder || (i + 1),
+        };
+      }
+    });
+
+    renderContainerList(containers, keys, el);
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:.82rem;color:var(--muted)">Docker socket not available.</div>';
+  }
+}
+
+function renderContainerList(containers, keys, el) {
+  const inUseKeys    = keys.filter(k => containerSettings[k]?.inUse !== false);
+  const notInUseKeys = keys.filter(k => containerSettings[k]?.inUse === false);
+
+  // sort each group by uptime order
+  const sortOrder = arr => [...arr].sort((a,b) =>
+    (containerSettings[a]?.uptimeOrder||99) - (containerSettings[b]?.uptimeOrder||99)
+  );
+
+  const sorted = sortOrder(inUseKeys);
+
+  // wrap in two-column layout
+  el.innerHTML = `
+    <div id="adm-inuse-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="adm-notinuse-list" style="display:none"></div>`;
+
+  function buildCard(name) {
+    const c    = containers[name] || {};
+    const cfg  = getContainerSetting(name);
+    const stateCol = c.state === 'up' ? 'var(--pgt)' : c.state === 'down' ? 'var(--prt)' : 'var(--faint)';
+    const runBadge = c.running
+      ? `<span style="font-size:9px;background:var(--pg);color:var(--pgt);padding:2px 7px;border-radius:9999px">running</span>`
+      : `<span style="font-size:9px;background:var(--pr);color:var(--prt);padding:2px 7px;border-radius:9999px">stopped</span>`;
+
+    return `<div class="adm-container-card" draggable="true"
+      data-name="${name}"
+      ondragstart="dragStart(event)"
+      ondragover="dragOver(event)"
+      ondrop="dragDrop(event)"
+      ondragend="dragEnd(event)">
+      <div class="adm-cc-header" onclick="toggleContainerCard('${name}')">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div class="adm-drag-handle">⠿</div>
+          <div style="width:7px;height:7px;border-radius:50%;background:${stateCol};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.875rem;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              ${cfg.label || name}
+            </div>
+            <div style="font-size:.72rem;color:var(--faint)">${name} · ${c.image || ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          ${runBadge}
+          <div style="font-size:11px;color:var(--faint);transition:transform .2s" id="adm-cc-arrow-${name}">▾</div>
+          <button onclick="event.stopPropagation();deleteContainer('${name}')"
+            style="background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;padding:2px 6px;border-radius:3px;transition:color .15s"
+            title="Delete container"
+            onmouseover="this.style.color='var(--prt)'" onmouseout="this.style.color='var(--faint)'">✕</button>
+        </div>
+      </div>
+      <div class="adm-cc-body" id="adm-cc-body-${name}" style="display:none">
+        <div class="adm-field" style="margin-bottom:10px">
+          <label class="adm-label">Display name</label>
+          <input type="text" class="adm-input" value="${cfg.label || name}"
+            oninput="updateCfg('${name}','label',this.value)">
+        </div>
+        <div class="adm-field" style="margin-bottom:10px">
+          <label class="adm-label">Port (shown in network graph)</label>
+          <input type="text" class="adm-input" value="${cfg.port || ''}" placeholder="e.g. :443"
+            oninput="updateCfg('${name}','port',this.value)">
+        </div>
+        <div class="adm-field" style="margin-bottom:14px">
+          <label class="adm-label">Description</label>
+          <input type="text" class="adm-input" value="${cfg.desc || ''}" placeholder="Short description shown to visitors"
+            oninput="updateCfg('${name}','desc',this.value)">
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink);cursor:pointer;opacity:0.5">
+            <input type="checkbox" checked disabled
+              style="accent-color:var(--pgt);width:15px;height:15px;cursor:not-allowed">
+            Show on uptime page <span style="font-size:.72rem;color:var(--faint)">(follows tracking)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" ${cfg.showHome ? 'checked' : ''}
+              id="adm-home-${name}"
+              style="accent-color:var(--pgt);width:15px;height:15px;cursor:pointer"
+              onchange="toggleHome('${name}',this.checked)">
+            Show on home page
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" ${cfg.showGraph ? 'checked' : ''}
+              id="adm-graph-${name}"
+              style="accent-color:var(--pgt);width:15px;height:15px;cursor:pointer"
+              onchange="toggleGraph('${name}',this.checked)">
+            Show on network graph
+          </label>
+        </div>
+        <div style="padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:.82rem;font-weight:500;color:var(--ink)">Category</div>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Groups the container on public pages.</div>
+            </div>
+            <select class="adm-input" style="max-width:140px;flex-shrink:0"
+              onchange="setContainerInUse('${name}',this.value==='true')">
+              <option value="true"  ${(c.inUse !== false) ? 'selected' : ''}>In use</option>
+              <option value="false" ${(c.inUse === false) ? 'selected' : ''}>Not in use</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:.82rem;font-weight:500;color:var(--ink)">Visibility status</div>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:2px">
+                Active — normal. Maintenance — frozen display, never triggers red bar. Inactive — shows "not actively maintained". Hidden — invisible.
+              </div>
+            </div>
+            <select class="adm-input" style="max-width:140px;flex-shrink:0"
+              onchange="setContainerStatus('${name}',this.value)">
+              <option value="active"      ${(c.status||'active')==='active'      ? 'selected' : ''}>Active</option>
+              <option value="maintenance" ${(c.status||'active')==='maintenance' ? 'selected' : ''}>Maintenance</option>
+              <option value="inactive"    ${(c.status||'active')==='inactive'    ? 'selected' : ''}>Inactive</option>
+              <option value="hidden"      ${(c.status||'active')==='hidden'      ? 'selected' : ''}>Hidden</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:.82rem;font-weight:500;color:var(--ink)">Track uptime</div>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:2px">
+                Pause to stop recording. Resume resets uptime % from now.
+              </div>
+            </div>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" ${c.tracking !== false ? 'checked' : ''}
+                id="adm-tracking-${name}"
+                style="accent-color:var(--pgt);width:15px;height:15px;cursor:pointer"
+                onchange="toggleTracking('${name}',this.checked)">
+              <span style="font-size:.82rem;color:var(--ink)">${c.tracking !== false ? 'Tracking' : 'Paused'}</span>
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div class="adm-field" style="flex:1">
+            <label class="adm-label">Uptime order</label>
+            <input type="number" class="adm-input" min="1" max="99" value="${cfg.uptimeOrder || 99}"
+              oninput="updateCfg('${name}','uptimeOrder',parseInt(this.value)||99)">
+          </div>
+          <div class="adm-field" style="flex:1">
+            <label class="adm-label">Home order</label>
+            <input type="number" class="adm-input" min="1" max="99" value="${cfg.homeOrder || 99}"
+              oninput="updateCfg('${name}','homeOrder',parseInt(this.value)||99)">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // render in-use cards
+  const inUseEl = document.getElementById('adm-inuse-list');
+  sortOrder(inUseKeys).forEach(name => {
+    if(inUseEl) inUseEl.insertAdjacentHTML('beforeend', buildCard(name));
+  });
+
+  // render not-in-use cards into sidebar
+  const notInUseEl     = document.getElementById('adm-notinuse-list');
+  const notInUseSidebar = document.getElementById('adm-notinuse-sidebar');
+  if(notInUseSidebar) {
+    if(notInUseKeys.length === 0) {
+      notInUseSidebar.innerHTML = '<div style="font-size:.78rem;color:var(--faint)">None.</div>';
+    } else {
+      notInUseSidebar.innerHTML = '';
+      sortOrder(notInUseKeys).forEach(name => {
+        if(notInUseSidebar) notInUseSidebar.insertAdjacentHTML('beforeend', buildCard(name));
+      });
+    }
+  }
+
+  // fix drag targets to only work within same column
+  document.querySelectorAll('.adm-container-card').forEach(card => {
+    card.addEventListener('dragover',  e => { e.preventDefault(); card.style.borderColor='var(--ink2)'; });
+    card.addEventListener('dragleave', e => { card.style.borderColor=''; });
+  });
+
+  // load deleted column last since it depends on the DOM being ready
+  loadDeletedContainers();
+}
+
+function toggleContainerCard(name) {
+  const body  = document.getElementById(`adm-cc-body-${name}`);
+  const arrow = document.getElementById(`adm-cc-arrow-${name}`);
+  if(!body) return;
+  const open = body.style.display === 'none';
+  body.style.display  = open ? 'block' : 'none';
+  if(arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+let saveTimer = {};
+function updateCfg(name, key, value) {
+  if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+  containerSettings[name][key] = value;
+  clearTimeout(saveTimer[name]);
+  saveTimer[name] = setTimeout(() => {
+    saveContainerSetting(name);
+    applyContainerSettings();
+  }, 600);
+}
+
+function toggleUptime(name, val) {
+  if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+  containerSettings[name].showUptime = val;
+  // if turning off uptime, also turn off home
+  if(!val) {
+    containerSettings[name].showHome = false;
+    const homeEl = document.getElementById(`adm-home-${name}`);
+    if(homeEl) homeEl.checked = false;
+  }
+  saveContainerSetting(name);
+  applyContainerSettings();
+}
+
+async function setContainerInUse(name, inUse) {
+  if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+  containerSettings[name].inUse = inUse;
+  // not in use = automatically hidden from public
+  if(!inUse) {
+    containerSettings[name].showHome   = false;
+    containerSettings[name].showUptime = false;
+    // update checkboxes if card is open
+    const homeEl   = document.getElementById(`adm-home-${name}`);
+    const uptimeEl = document.getElementById(`adm-uptime-${name}`);
+    if(homeEl)   homeEl.checked   = false;
+    if(uptimeEl) uptimeEl.checked = false;
+  }
+  const s = loadAdminSettings() || {};
+  if(!s.containers) s.containers = {};
+  s.containers[name] = containerSettings[name];
+  saveAdminSettings(s);
+  // sync public flag in DB
+  await authedFetch('/api/container/toggle-public', {
+    method: 'POST',
+    body: JSON.stringify({name, public: inUse ? 1 : 0})
+  }).catch(()=>{});
+  applyContainerSettings();
+  showAdmToast(`${name} marked as ${inUse ? 'in use' : 'not in use'}.`);
+  refreshAndFetch();
+}
+
+async function deleteContainer(name) {
+  if(!confirm(`Delete "${name}"? History is kept for 30 days and can be restored.`)) return;
+  try {
+    await authedFetch('/api/container/delete', {
+      method: 'POST',
+      body: JSON.stringify({name})
+    });
+    showAdmToast(`${name} deleted. History kept for 30 days.`);
+    await loadDiscoveredContainers();
+    loadDeletedContainers();
+    refreshAndFetch();
+  } catch(e) {
+    showAdmToast('Failed to delete.');
+  }
+}
+
+async function restoreContainer(name) {
+  try {
+    await authedFetch('/api/container/restore', {
+      method: 'POST',
+      body: JSON.stringify({name})
+    });
+    showAdmToast(`${name} restored.`);
+    await loadDiscoveredContainers();
+    loadDeletedContainers();
+    refreshAndFetch();
+  } catch(e) {
+    showAdmToast('Failed to restore.');
+  }
+}
+
+async function loadDeletedContainers() {
+  const elInline  = document.getElementById('adm-deleted-inline');
+  const elSection = document.getElementById('adm-deleted-list');
+  try {
+    const res  = await authedFetch('/api/container/deleted');
+    const list = await res.json();
+    function renderDeleted(el) {
+      if(!el) return;
+      if(!list.length) { el.innerHTML = '<div style="font-size:.78rem;color:var(--faint)">None.</div>'; return; }
+      el.innerHTML = list.map(c => `
+        <div class="adm-container-card">
+          <div class="adm-cc-header" style="cursor:default;flex-direction:column;align-items:flex-start;gap:6px">
+            <div style="font-size:.82rem;font-weight:500;color:var(--ink)">${c.name}</div>
+            <div style="font-size:.7rem;color:var(--faint)">${c.image}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px">
+              <div style="font-size:.7rem;color:var(--prt)">${c.days_left}d until purged</div>
+              <button class="adm-btn" style="padding:4px 10px;font-size:11px;background:var(--surface);color:var(--ink);border:1px solid var(--border)"
+                onclick="restoreContainer('${c.name}')">Restore</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+    renderDeleted(elInline);
+    renderDeleted(elSection);
+  } catch(e) {
+    const msg = '<div style="font-size:.78rem;color:var(--faint)">Could not load.</div>';
+    if(elInline)  elInline.innerHTML  = msg;
+    if(elSection) elSection.innerHTML = msg;
+  }
+}
+
+async function refreshAndFetch() {
+  try {
+    await authedFetch('/api/refresh', {method: 'POST'});
+  } catch(e) {}
+  await fetchLiveData();
+  resetFetchInterval();
+}
+
+async function setContainerStatus(name, status) {
+  try {
+    await authedFetch('/api/container/set-status', {
+      method: 'POST',
+      body: JSON.stringify({name, status})
+    });
+    showAdmToast(`${name} set to ${status}.`);
+    applyContainerSettings();
+  } catch(e) {
+    showAdmToast('Failed to update status.');
+  }
+}
+
+async function toggleTracking(name, val) {
+  try {
+    await authedFetch('/api/container/toggle-tracking', {
+      method: 'POST',
+      body: JSON.stringify({name, tracking: val ? 1 : 0})
+    });
+    // tracking on = always show on uptime page
+    if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+    containerSettings[name].showUptime = val;
+    // tracking off = also remove from home page
+    if(!val) {
+      containerSettings[name].showHome = false;
+      const homeEl = document.getElementById(`adm-home-${name}`);
+      if(homeEl) homeEl.checked = false;
+    }
+    const s = loadAdminSettings() || {};
+    if(!s.containers) s.containers = {};
+    s.containers[name] = containerSettings[name];
+    saveAdminSettings(s);
+    // update label
+    const lbl = document.querySelector(`#adm-tracking-${name} + span`);
+    if(lbl) lbl.textContent = val ? 'Tracking' : 'Paused';
+    showAdmToast(val
+      ? `${name} — tracking enabled. Now visible on uptime page.`
+      : `${name} — tracking paused. Removed from uptime page.`
+    );
+    applyContainerSettings();
+    refreshAndFetch();
+  } catch(e) {
+    showAdmToast('Failed to update tracking.');
+  }
+}
+
+function toggleGraph(name, val) {
+  if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+  containerSettings[name].showGraph = val;
+  const s = loadAdminSettings() || {};
+  if(!s.containers) s.containers = {};
+  s.containers[name] = containerSettings[name];
+  saveAdminSettings(s);
+  updateServicesNode();
+  showAdmToast(`${name} ${val ? 'added to' : 'removed from'} network graph.`);
+}
+
+function toggleHome(name, val) {
+  if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+  containerSettings[name].showHome = val;
+  // if turning on home, must also enable uptime
+  if(val) {
+    containerSettings[name].showUptime = true;
+    const uptimeEl = document.getElementById(`adm-uptime-${name}`);
+    if(uptimeEl) uptimeEl.checked = true;
+  }
+  saveContainerSetting(name);
+  applyContainerSettings();
+}
+
+function applyContainerSettings() {
+  UPTIME_DATA.services.forEach(svc => {
+    const cfg = containerSettings[svc.id];
+    if(cfg) {
+      svc.visible     = cfg.showUptime === true;
+      svc.showHome    = cfg.showHome   === true;
+      svc.inUse       = cfg.inUse      !== false;
+      svc.name        = cfg.label || svc.name || svc.id;
+      svc.desc        = cfg.desc  || svc.desc || '';
+      svc.uptimeOrder = cfg.uptimeOrder || 99;
+      svc.homeOrder   = cfg.homeOrder   || 99;
+    }
+  });
+  UPTIME_DATA.services.sort((a,b) => (a.uptimeOrder||99) - (b.uptimeOrder||99));
+  try { renderUptime(); } catch(e) {}
+  try { renderHomeCards(); } catch(e) {}
+}
+
+// ── DRAG AND DROP ─────────────────────────────────────────────────────────────
+function dragStart(e) {
+  dragSrc = e.currentTarget;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.borderColor = 'var(--ink2)';
+}
+function dragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  document.querySelectorAll('.adm-container-card').forEach(c => {
+    c.style.borderColor = '';
+  });
+}
+function dragDrop(e) {
+  e.preventDefault();
+  if(dragSrc === e.currentTarget) return;
+  const list = document.getElementById('adm-containers-list');
+  const cards = [...list.querySelectorAll('.adm-container-card')];
+  const srcIdx = cards.indexOf(dragSrc);
+  const dstIdx = cards.indexOf(e.currentTarget);
+  if(srcIdx < 0 || dstIdx < 0) return;
+  // reorder DOM
+  if(srcIdx < dstIdx) {
+    e.currentTarget.after(dragSrc);
+  } else {
+    e.currentTarget.before(dragSrc);
+  }
+  // update uptimeOrder based on new DOM order
+  const newCards = [...list.querySelectorAll('.adm-container-card')];
+  newCards.forEach((card, i) => {
+    const name = card.dataset.name;
+    if(!containerSettings[name]) containerSettings[name] = getContainerSetting(name);
+    containerSettings[name].uptimeOrder = i + 1;
+    const orderInput = card.querySelector('input[type="number"]');
+    if(orderInput) orderInput.value = i + 1;
+  });
+  // save all
+  const s = loadAdminSettings() || {};
+  s.containers = containerSettings;
+  saveAdminSettings(s);
+  applyContainerSettings();
+}
+
+
+
+const HOME_CARDS_DEFAULT = [
+  {id:'nextcloud', name:'Nextcloud',    desc:'Self-hosted cloud storage. Up to 20 GB free, optionally encrypted. Invite only — email to request access.'},
+  {id:'jellyfin',  name:'Jellyfin',     desc:'Personal media server. Movies, shows, music — streamed from the NAS.'},
+  {id:'synapse',   name:'Matrix',       desc:'Self-hosted Matrix homeserver running Synapse. Federated, encrypted messaging.'},
+  {id:'games',     name:'Game servers', desc:'Minecraft (Java + Bedrock), Sons of the Forest, CS2, BeamNG. Managed via AMP and Crafty.'},
+];
+
+function populateHomeCards(s) {
+  const container = document.getElementById('adm-home-cards');
+  if(!container) return;
+  const cards = s.homeCards || HOME_CARDS_DEFAULT;
+  container.innerHTML = cards.map((card, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+      <div class="adm-field">
+        <label class="adm-label">Card ${i+1} — Name</label>
+        <input type="text" class="adm-input" id="hcard-name-${i}" value="${card.name}">
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Description</label>
+        <input type="text" class="adm-input" id="hcard-desc-${i}" value="${card.desc}">
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveHomeCards() {
+  const s = loadAdminSettings() || {};
+  const defaults = s.homeCards || HOME_CARDS_DEFAULT;
+  s.homeCards = defaults.map((card, i) => ({
+    id:   card.id,
+    name: document.getElementById(`hcard-name-${i}`)?.value || card.name,
+    desc: document.getElementById(`hcard-desc-${i}`)?.value || card.desc,
+  }));
+  saveAdminSettings(s);
+  applyHomeCards(s.homeCards);
+  showAdmToast('Home cards saved.');
+}
+
+function applyHomeCards(cards) {
+  if(!cards) return;
+  const nameEls = document.querySelectorAll('.home-svc-name');
+  const descEls = document.querySelectorAll('.home-svc-desc');
+  cards.forEach((card, i) => {
+    if(nameEls[i]) nameEls[i].textContent = card.name;
+    if(descEls[i]) descEls[i].textContent = card.desc;
+  });
+}
+
+const NODE_IDS = ['internet','cloudflare','linode','truenas','services','cfdomains'];
+
+function populateNodeEditor(s) {
+  const container = document.getElementById('adm-nodes');
+  if(!container) return;
+  container.innerHTML = NODE_IDS.map(id => {
+    const n = nodes[id];
+    if(!n) return '';
+    const override = s.nodeOverrides?.[id] || {};
+    return `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:.8rem;font-weight:500;color:var(--ink);margin-bottom:2px">${n.name}</div>
+        <div class="adm-field">
+          <label class="adm-label">Role</label>
+          <input type="text" class="adm-input" id="node-role-${id}" value="${override.role || n.role}">
+        </div>
+        <div class="adm-field">
+          <label class="adm-label">Description</label>
+          <textarea class="adm-input" id="node-desc-${id}" rows="3" style="resize:vertical">${override.desc || n.desc}</textarea>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function saveNodeInfo() {
+  const s = loadAdminSettings() || {};
+  if(!s.nodeOverrides) s.nodeOverrides = {};
+  NODE_IDS.forEach(id => {
+    const role = document.getElementById(`node-role-${id}`)?.value;
+    const desc = document.getElementById(`node-desc-${id}`)?.value;
+    if(role || desc) s.nodeOverrides[id] = {role, desc};
+  });
+  saveAdminSettings(s);
+  applyNodeOverrides(s.nodeOverrides);
+  showAdmToast('Node info saved.');
+}
+
+function applyNodeOverrides(overrides) {
+  if(!overrides) return;
+  Object.entries(overrides).forEach(([id, o]) => {
+    if(!nodes[id]) return;
+    if(o.role) nodes[id].role = o.role;
+    if(o.desc) nodes[id].desc = o.desc;
+  });
+}
+
+function populateAdminPanel() {
+  const s = loadAdminSettings() || {};
+  // contact fields
+  loadDiscoveredContainers();
+  populateNodeEditor(s);
+  document.getElementById('adm-email').value   = s.email   || 'mrboony@linuslinus.com';
+  document.getElementById('adm-github').value  = s.github  || 'boony-moony';
+  document.getElementById('adm-discord').value = s.discord || 'boony_moony';
+  // status
+  document.getElementById('adm-state').value   = s.statusState   || STATUS.state;
+  document.getElementById('adm-msg').value     = s.statusMessage || STATUS.message;
+  // services
+  const container = document.getElementById('adm-services');
+  container.innerHTML = UPTIME_DATA.services.map(svc => {
+    const visible = s.serviceVisibility?.[svc.id] !== false;
+    return `<label class="adm-toggle">
+      <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleService('${svc.id}', this.checked)">
+      <span>${svc.name}</span>
+    </label>`;
+  }).join('');
+}
+
+function saveAdminContact() {
+  const s = loadAdminSettings() || {};
+  s.email   = document.getElementById('adm-email').value.trim();
+  s.github  = document.getElementById('adm-github').value.trim();
+  s.discord = document.getElementById('adm-discord').value.trim();
+  // clean up legacy fields
+  delete s.serviceVisibility;
+  delete s.homeCards;
+  saveAdminSettings(s);
+  applyAdminSettings();
+  showAdmToast('Contact info saved.');
+}
+
+function saveAdminStatus() {
+  const s = loadAdminSettings() || {};
+  s.statusState   = document.getElementById('adm-state').value;
+  s.statusMessage = document.getElementById('adm-msg').value.trim();
+  saveAdminSettings(s);
+  // clear dismissed so new message shows
+  localStorage.removeItem('dismissed-status');
+  applyAdminSettings();
+  const bar = document.getElementById('status-bar');
+  if(bar) bar.style.display = '';
+  showAdmToast('Status updated.');
+}
+
+function toggleService(id, visible) {
+  const s = loadAdminSettings() || {};
+  if(!s.serviceVisibility) s.serviceVisibility = {};
+  s.serviceVisibility[id] = visible;
+  saveAdminSettings(s);
+  applyAdminSettings();
+}
+
+async function resetTotp() {
+  if(!confirm('This will invalidate your current authenticator. You will need to re-scan the QR code. Continue?')) return;
+  try {
+    const res = await authedFetch('/api/auth/reset-totp', {method:'POST'});
+    const data = await res.json();
+    if(data.ok) {
+      showAdmToast('2FA reset. Restart the container to generate a new QR code.');
+      adminLogout();
+    }
+  } catch(e) { showAdmToast('Failed to reset.'); }
+}
+
+function downloadHistoryJSON() {
+  const data = {
+    exported: new Date().toISOString(),
+    overall:  UPTIME_DATA.overall,
+    nas:      UPTIME_DATA.nas,
+    services: UPTIME_DATA.services
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'uptime-history-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showAdmToast('History exported.');
+}
+
+function adminLogout() {
+  SESSION_TOKEN = '';
+  sessionStorage.removeItem('admin-token');
+  clearInterval(adminPollInterval);
+  const sl = document.getElementById('adm-sidebar-left');
+  const sr = document.getElementById('adm-sidebar-right');
+  if(sl) sl.style.visibility = 'hidden';
+  if(sr) sr.style.visibility = 'hidden';
+  renderAdmin();
+}
+
+function showAdmToast(msg) {
+  const t = document.getElementById('adm-toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+// Apply saved settings on every page load
+document.addEventListener('DOMContentLoaded', function() {
+  try { applyAdminSettings(); } catch(e) { console.warn('applyAdminSettings:', e); }
+});
+
+// ── LIVE DATA FETCH ───────────────────────────────────────────────────────────
+async function fetchLiveData() {
+  try {
+    const [statusRes, historyRes] = await Promise.all([
+      fetch('/status.json'),
+      fetch('/history.json')
+    ]);
+    if(statusRes.ok) {
+      const status = await statusRes.json();
+      // hidden/inactive containers are already excluded by backend
+      // use backend overall — it already excludes hidden/paused/inactive
+      const prevState = STATUS.state;
+      STATUS.state = status.overall === 'operational' ? 'operational' :
+                     status.overall === 'degraded'    ? 'degraded' :
+                     status.overall === 'down'        ? 'down' : 'operational';
+      const bar = document.getElementById('status-bar');
+      const txt = document.getElementById('status-text');
+      if(bar && txt) {
+        const s = loadAdminSettings() || {};
+        const hasManualMsg = s.statusMessage && s.statusMessage.trim().length > 0;
+        if(STATUS.state !== 'operational') {
+          // automatic — show red/degraded bar with auto message
+          STATUS.message = STATUS.state === 'degraded'
+            ? 'Some services are experiencing issues. Check the uptime page for details.'
+            : 'One or more services are down. Check the uptime page for details.';
+          bar.className = 'status-bar ' + STATUS.state;
+          txt.textContent = STATUS.message;
+          bar.style.display = '';
+          localStorage.removeItem('dismissed-status');
+        } else if(hasManualMsg) {
+          // operational but admin set a manual message — show it
+          STATUS.message = s.statusMessage;
+          bar.className = 'status-bar ' + (s.statusState || 'operational');
+          txt.textContent = STATUS.message;
+          const hash = bar.className + '|' + STATUS.message;
+          const dismissed = localStorage.getItem('dismissed-status');
+          if(dismissed !== hash) bar.style.display = '';
+        } else {
+          // operational, no manual message — hide bar
+          bar.style.display = 'none';
+        }
+      }
+    }
+    if(historyRes.ok) {
+      const h = await historyRes.json();
+      // always overwrite — live data takes full priority
+      if(h.overall)  UPTIME_DATA.overall  = h.overall;
+      if(h.nas) {
+        UPTIME_DATA.nas = h.nas;
+        // always update session text directly
+        const sessEl = document.getElementById('ut-nas-session');
+        if(sessEl && h.nas.session) sessEl.textContent = h.nas.session;
+        // also update dot
+        const nasDot = document.getElementById('ut-nas-dot');
+        if(nasDot) nasDot.className = 'ut-dot ' + (h.nas.state || 'unknown');
+      }
+      if(h.services) {
+        // fully replace service list from backend — it's the source of truth
+        UPTIME_DATA.services = h.services.map(svc => ({
+          ...svc,
+          visible:  svc.showUptime === true,
+          showHome: svc.showHome  === true,
+          inUse:    svc.inUse     !== false,
+        }));
+      }
+      // always re-render uptime so it reflects live data when tab is opened
+      applyContainerSettings();
+      try { updateServicesNode(); } catch(e) {}
+      try { renderUptime(); } catch(e) { console.warn("renderUptime:", e); }
+      try { renderHomeCards(); } catch(e) { console.warn("renderHomeCards:", e); }
+    }
+  } catch(e) {
+    // backend not running — stay on empty data silently
+  }
+}
+
+// Fetch on load and every 60s
+document.addEventListener('DOMContentLoaded', function() {
+  fetchLiveData();
+});
+let fetchInterval = setInterval(fetchLiveData, 60000);
+
+function resetFetchInterval() {
+  clearInterval(fetchInterval);
+  fetchInterval = setInterval(fetchLiveData, 60000);
+}
+
+// ── SETTINGS FETCH ────────────────────────────────────────────────────────────
+async function fetchSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if(!res.ok) return;
+    const s = await res.json();
+    if(Object.keys(s).length === 0) return;
+    // apply to localStorage so applyAdminSettings works
+    localStorage.setItem('admin-settings', JSON.stringify(s));
+    applyAdminSettings();
+  } catch(e) {
+    // API not running — use localStorage only
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  fetchSettings();
+});
+</script>
+
+<!-- ADMIN PAGE -->
+<div id="page-admin" style="display:none">
+  <div class="admin-wrap">
+
+    <!-- LEFT SIDEBAR — recently deleted -->
+    <div class="adm-sidebar" id="adm-sidebar-left" style="visibility:hidden">
+      <div class="adm-sidebar-section">
+        <div class="adm-sidebar-label">Recently deleted</div>
+        <div id="adm-deleted-inline" style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:.78rem;color:var(--faint)">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="adm-main">
+
+    <div class="admin-header">
+      <div class="uptime-eyebrow">Admin panel</div>
+    </div>
+
+    <!-- LOCKED STATE -->
+    <div id="admin-locked" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40dvh;gap:16px;text-align:center">
+
+      <!-- TOTP SETUP (shown if first time) -->
+      <div id="admin-setup" style="display:none;flex-direction:column;align-items:center;gap:16px">
+        <div class="adm-lock-title">Set up authenticator</div>
+        <div style="font-size:.82rem;color:var(--muted);max-width:320px">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</div>
+        <div id="totp-qr" style="width:200px;height:200px;border:1px solid var(--border);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center"></div>
+        <div style="font-family:var(--font-mono);font-size:.75rem;color:var(--faint);max-width:280px;word-break:break-all" id="totp-secret-display"></div>
+        <button class="adm-btn" onclick="showTotpInput()">I've scanned it →</button>
+      </div>
+
+      <!-- TOTP CODE ENTRY -->
+      <div id="admin-totp" style="display:none;flex-direction:column;align-items:center;gap:16px">
+        <div class="adm-lock-title">Enter 2FA code</div>
+        <div style="font-size:.82rem;color:var(--muted)">6-digit code from your authenticator app</div>
+        <input id="admin-code-input" type="text" inputmode="numeric" pattern="[0-9]*"
+          class="adm-input" placeholder="000000" maxlength="6"
+          onkeydown="if(event.key==='Enter')adminLogin()"
+          style="max-width:160px;text-align:center;letter-spacing:.3em;font-size:1.2rem">
+        <button class="adm-btn" onclick="adminLogin()">Verify</button>
+        <div id="admin-pass-err" style="font-size:.78rem;color:var(--prt);min-height:1em"></div>
+      </div>
+
+    </div>
+
+    <!-- PANEL -->
+    <div id="admin-panel" style="display:none">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:28px">
+        <button class="adm-logout-btn" onclick="resetTotp()" style="color:var(--prt);border-color:var(--prt)">Reset 2FA</button>
+        <button class="adm-logout-btn" onclick="adminLogout()">Sign out</button>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div class="adm-section adm-narrow">
+        <div class="adm-section-label">Manual status message</div>
+        <div class="adm-card">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px">The bar shows automatically when services go down. Use this to add a manual message — maintenance notice, announcement, etc. Leave message blank to hide it when everything is operational.</div>
+          <div class="adm-field">
+            <label class="adm-label">Style</label>
+            <select id="adm-state" class="adm-input">
+              <option value="operational">Green</option>
+              <option value="degraded">Yellow</option>
+              <option value="down">Red</option>
+            </select>
+          </div>
+          <div class="adm-field">
+            <label class="adm-label">Message</label>
+            <input id="adm-msg" type="text" class="adm-input" placeholder="Leave blank to hide when operational">
+          </div>
+          <button class="adm-btn" onclick="saveAdminStatus()">Save</button>
+          <button class="adm-btn" style="background:var(--surface);color:var(--muted);border:1px solid var(--border)" onclick="clearAdminStatus()">Clear message</button>
+        </div>
+      </div>
+
+      <!-- CONTAINERS -->
+      <div class="adm-section">
+        <div class="adm-section-label">Containers</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
+          Drag to reorder. Home page visibility requires uptime visibility.
+          Changes save automatically.
+        </div>
+        <div id="adm-containers-list" style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:.82rem;color:var(--muted)">Loading...</div>
+        </div>
+      </div>
+
+      <!-- NODE INFO -->
+      <div class="adm-section adm-narrow">
+        <div class="adm-section-label">Network graph — node descriptions</div>
+        <div class="adm-card" style="gap:16px">
+          <div id="adm-nodes" style="display:flex;flex-direction:column;gap:16px"></div>
+          <button class="adm-btn" onclick="saveNodeInfo()">Save node info</button>
+        </div>
+      </div>
+
+      <!-- CONTACT INFO -->
+      <div class="adm-section adm-narrow">
+        <div class="adm-section-label">Contact page info</div>
+        <div class="adm-card">
+          <div class="adm-field">
+            <label class="adm-label">Email</label>
+            <input id="adm-email" type="email" class="adm-input" placeholder="you@example.com">
+          </div>
+          <div class="adm-field">
+            <label class="adm-label">GitHub username</label>
+            <input id="adm-github" type="text" class="adm-input" placeholder="username">
+          </div>
+          <div class="adm-field">
+            <label class="adm-label">Discord username</label>
+            <input id="adm-discord" type="text" class="adm-input" placeholder="username">
+          </div>
+          <button class="adm-btn" onclick="saveAdminContact()">Save contact info</button>
+        </div>
+      </div>
+
+      <!-- DOWNLOAD HISTORY -->
+      <div class="adm-section adm-narrow">
+        <div class="adm-section-label">Data export</div>
+        <div class="adm-card" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:.875rem;font-weight:500;color:var(--ink)">Download history</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:3px">Exports current uptime data as JSON. SQLite database available at /download/history.db when checker is running.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="adm-btn" onclick="downloadHistoryJSON()">Export JSON</button>
+            <a class="adm-btn" href="/download/history.db" download="uptime.db" style="text-decoration:none">Export DB</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end admin-panel -->
+    </div><!-- end adm-main -->
+
+    <!-- RIGHT SIDEBAR — not in use -->
+    <div class="adm-sidebar" id="adm-sidebar-right" style="visibility:hidden">
+      <div class="adm-sidebar-section">
+        <div class="adm-sidebar-label">Not in use</div>
+        <div id="adm-notinuse-sidebar" style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:.78rem;color:var(--faint)">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="adm-toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bone);font-size:.8rem;padding:8px 20px;border-radius:6px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999"></div>
+
+</body>
+</html>
