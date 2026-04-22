@@ -31,7 +31,8 @@ HISTORY_PUB_PATH= os.path.join(DATA_DIR, "history-public.json")
 TOTP_SECRET_PATH= os.path.join(DATA_DIR, "totp-secret.txt")
 INTERVAL        = CONFIG.get("check_interval_seconds", 60)
 DOCKER_SOCK     = "/var/run/docker.sock"
-CHECKER_START   = time.time()
+CHECKER_VERSION = "1.0.0"
+
 EXCLUDED_IMAGES = {"homelab-site", "homelab_site"}
 
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -286,6 +287,56 @@ def nas_session():
     except Exception:
         return "Pending"
 
+def nas_day_history():
+    """Build NAS history by detecting gaps — a minute with ANY check = NAS was up."""
+    blocks = []
+    now = int(time.time())
+    try:
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        for i in range(89, -1, -1):
+            day_start = now - (i + 1) * 86400
+            day_end   = now - i * 86400
+            cur.execute(
+                "SELECT COUNT(DISTINCT (ts/60)) FROM checks WHERE ts>=? AND ts<?",
+                (day_start, day_end)
+            )
+            active_minutes = cur.fetchone()[0]
+            total_minutes  = (day_end - day_start) // 60
+            if active_minutes == 0:
+                blocks.append("unknown")
+            elif active_minutes / total_minutes >= 0.95:
+                blocks.append("up")
+            elif active_minutes / total_minutes >= 0.3:
+                blocks.append("degraded")
+            else:
+                blocks.append("down")
+        con.close()
+    except Exception as e:
+        print(f"[checker] nas_day_history error: {e}")
+        blocks = ["unknown"] * 90
+    return blocks
+
+
+    try:
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        cur.execute("SELECT value FROM meta WHERE key='last_start'")
+        row = cur.fetchone()
+        con.close()
+        start = int(row[0]) if row else int(CHECKER_START)
+        secs  = time.time() - start
+        d = int(secs // 86400)
+        h = int((secs % 86400) // 3600)
+        m = int((secs % 3600) // 60)
+        parts = []
+        if d: parts.append(f"{d}d")
+        if h: parts.append(f"{h}h")
+        parts.append(f"{m}m")
+        return "Up for " + " ".join(parts)
+    except Exception:
+        return "Pending"
+
 def nas_uptime_pct(days):
     try:
         now = int(time.time())
@@ -373,6 +424,7 @@ def write_outputs(results, known, discovered):
     nas_p365 = nas_uptime_pct(365)
 
     base = {
+        "version": CHECKER_VERSION,
         "updated": datetime.now(timezone.utc).isoformat(),
         "overall": {
             "state": overall_state,
@@ -390,7 +442,7 @@ def write_outputs(results, known, discovered):
             "pct30":   nas_p30,
             "pct180":  nas_p180,
             "pct365":  nas_p365,
-            "history": day_history(con, list(known.keys())[0]) if known else []
+            "history": nas_day_history()
         },
     }
     con.close()
@@ -697,12 +749,16 @@ def main():
         known = get_all_known_containers(con)
         results = {}
         cur = con.cursor()
+        # always write a NAS heartbeat check independent of services
+        cur.execute("INSERT INTO checks (ts,service,state,latency) VALUES (?,?,?,?)",
+                   (ts, "__nas__", "up", None))
+
         for name in known:
             info = known[name]
             if info.get("image","").startswith("homelab"): continue
             if not info.get("tracking", True):
                 print(f"[checker] {name}: tracking paused — skipping")
-                continue  # don't add to results at all
+                continue
             state = discovered.get(name, {}).get("state", "down")
             cur.execute("INSERT INTO checks (ts,service,state,latency) VALUES (?,?,?,?)",
                        (ts, name, state, None))
